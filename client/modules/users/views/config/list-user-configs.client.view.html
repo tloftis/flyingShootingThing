@@ -1,0 +1,36 @@
+<section class="container-fluid" ng-init="find()">
+    <div class="page-header" id="top">
+        <h1>Users</h1>
+    </div>
+<div class="row-centered">
+    <div  class="col-centered col-md-12 col-sm-6">
+    <table class="table table-condensed text-center table-bordered">
+        <tr>
+            <td class="text-center"><strong>Username</strong></td>
+            <td class="text-center"><strong>Full Name</strong></td>
+            <td class="text-center"><strong>Role</strong></td>
+            <td class="text-center"><strong>Status</strong></td>
+            <td class="text-center"><strong>Edit</strong></td>
+            <td class="text-center"><strong>Delete</strong></td>
+        </tr>
+        <tr ng-repeat="user in users | orderBy: 'created'">
+            <td>{{user.username | uppercase}}</td>
+            <td>{{user.displayName}}</td>
+            <td>{{user.roles[0] | uppercase}}</td>
+            <td ng-class="{'text-success':user.enabled,'text-warning':!user.enabled}">
+                <strong>{{user.enabled ? "Enabled" : "Disabled"}}</strong>
+            </td>
+            <td><a class="btn btn-xs btn-primary" data-ng-href="/#!/users/{{user._id}}/edit">
+                <span class="glyphicon glyphicon-edit"></span>
+            </a>
+            </td>
+            <td><a class="btn btn-xs btn-danger" ng-if="authentication.user._id != user._id"
+                   data-ng-click="remove(user);">
+                <i class="glyphicon glyphicon-trash"></i>
+            </a></td>
+        </tr>
+        <tr ng-if="!users.length"><td colspan="6"> <strong>No Users Configured</strong></td></tr>
+    </table>
+    </div>
+</div>
+</section>

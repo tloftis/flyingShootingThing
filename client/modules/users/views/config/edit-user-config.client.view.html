@@ -1,0 +1,107 @@
+<section class="container-fluid" ng-init="findOne()">
+        <div class="page-header" id="top">
+            <h1>Edit User</h1>
+        </div>
+        <div data-ng-if="user.$resolved">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-sm-8  col-xs-8">
+
+                <div class="panel panel-primary" ng-cloak>
+                    <div class="panel-heading clearfix">User Information</div>
+                    <div class="panel-body">
+                        <div class="row col-lg-6 col-lg-offset-3 col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3 col-xs-6 col-xs-offset-3">
+                            <form name="userEditForm" data-ng-submit="updateUser()" class="edituser form-horizontal"
+                                  novalidate autocomplete="off">
+                                <fieldset>
+                                    <div class="form-group">
+                                        <label for="firstName">First Name</label>
+                                        <input type="text" id="firstName" name="firstName" class="form-control" focus="true"
+                                               data-ng-model="user.firstName" placeholder="First Name" required>
+
+                                        <div class="error" ng-show="userEditForm.firstName.$invalid">
+                                            <p ng-show="userEditForm.firstName.$error.required" class="help-block">First
+                                                name is required.</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lastName">Last Name</label>
+                                        <input type="text" id="lastName" name="lastName" class="form-control"
+                                               data-ng-model="user.lastName" placeholder="Last Name" required>
+
+                                        <div class="error" ng-show="userEditForm.lastName.$invalid">
+                                            <p ng-show="userEditForm.lastName.$error.required" class="help-block">Last name
+                                                is required.</p>
+                                        </div>
+                                    </div>
+                                    <div data-ng-if="authentication.user._id !== user._id" class="form-group">
+                                        <label for="userRole">User Role</label>
+                                        <select id="userRole" data-ng-model="user.roles[0]"
+                                                ng-init="role.role = user.roles[0]"
+                                                data-ng-options="role.role as role.name for role in roles"
+                                                class="form-control" required>
+                                            <option value="">Select Role</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="username">Username</label>
+                                        <input type="text" id="username" name="username" class="form-control"
+                                               data-ng-model="user.username" placeholder="Username" maxlength="20"
+                                               required>
+
+                                        <div class="error" ng-show="userEditForm.username.$invalid">
+                                            <p ng-show="userEditForm.username.$error.required" class="help-block">Username
+                                                is required.</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" ng-show="passwordResetChecked">
+                                        <label for="password">New Password</label>
+                                        <input type="text" id="password" name="password" class="form-control"
+                                               placeholder="New Password" ng-required="passwordResetChecked"
+                                               data-ng-minlength=7 data-ng-model="passwordReset" required>
+
+                                        <div class="error" ng-show="userEditForm.password.$invalid">
+                                            <p ng-show="userEditForm.password.$error.required" class="help-block">Password
+                                                is required.</p>
+
+                                            <p ng-show="userEditForm.password.$error.minlength" class="help-block">Password
+                                                is required to be at least 7 characters</p>
+                                        </div>
+                                    </div>
+                                    <div class="form-group text-center">
+                                        <label for="passwordreset">Reset Password</label>
+                                        <input type="checkbox" id="passwordreset" name="passwordreset"
+                                               data-ng-model="passwordResetChecked">
+
+                                    </div>
+                                    <div data-ng-if="authentication.user._id !== user._id" class="form-group">
+
+                                        <div class="input-group">
+                                            <div class="form-control" role="alert"
+                                                 ng-class="{'alert-success':user.enabled, 'alert-danger':!user.enabled}">
+                                                <strong>{{user.enabled ? "Account Enabled" : "Account
+                                                    Disabled"}}</strong>
+                                            </div>
+                                            <div class="input-group-addon" type="button" data-ng-model="user.enabled"
+                                                 btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false">
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="text-center form-group">
+                                        <button type="button" data-ng-click="cancel()" class="btn btn-lg btn-danger">
+                                            Cancel
+                                        </button>
+                                        <button ng-disabled="userEditForm.$invalid" type="submit"
+                                                class="btn btn-lg btn-primary">Save
+                                        </button>
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+</section>

@@ -1,0 +1,15 @@
+################### REQUIRED PARAMETERS ###################
+
+NODE_ENV=production
+
+################### OPTIONAL PARAMETERS ###################
+#MONGO_URL=mongodb://127.0.0.1:27017/plane-game
+
+#PORT=2000
+
+# Redirect port 80 to the port defined
+#REDIRECT_INSECURE_HTTP=1
+
+# Logging
+# Set to false to only log to console
+#MONGO_LOG_TO_DB=1

@@ -1,0 +1,104 @@
+header .title h1 {
+    color: white;
+    font-size: 22px;
+    vertical-align: middle;
+    line-height: 55px;
+    position: absolute;
+    margin-left: 10px;
+    left: 230px;
+}
+
+
+[ng-click],
+[data-ng-click],
+[x-ng-click] {
+    cursor: pointer;
+}
+
+header .brand {
+    cursor: pointer;
+    position: relative;
+    opacity: 0.5;
+    top: 8px;
+    LEFT: -5px;
+}
+
+header .brand:hover {
+    opacity: 1;
+}
+
+div.spacer {
+    height: 10px;
+}
+
+header .alert {
+    margin: 5px;
+    padding: 5px 15px;
+}
+
+header .alert:hover {
+    cursor: pointer;
+}
+
+header .alert .badge {
+    float: left;
+    position: relative;
+    right: 7px;
+    top: 2px;
+}
+
+.navbar {
+    min-height: 55px;
+}
+
+ .handle {
+    cursor: move;
+}
+
+.main-content {
+    margin-top: 65px;
+}
+
+.content {
+    margin-top: 65px;
+}
+
+section {
+    position: relative;
+    top: 1px;
+}
+
+section .content {
+    position: absolute;
+    left: 0px;
+    width: 100%;
+    padding-left: 230px;
+    margin: 0px;
+}
+
+.loading  {
+    background-position: center center;
+    background-repeat: no-repeat;
+    text-align: center;
+    vertical-align: middle;
+    margin: 0 auto;
+    border-radius: 50%;
+    height: 50px;
+}
+
+.loading-img {
+    opacity: .7;
+    text-align: center;
+    height: 50%;
+}
+
+.config-option-btn {
+    font-size: xx-large;
+    padding: 50px 0px;
+    border-radius: 4px;
+    box-shadow: 1px 1px 4px black;
+}
+
+.config-option-btn i.fa {
+    font-size: xx-large;
+}
