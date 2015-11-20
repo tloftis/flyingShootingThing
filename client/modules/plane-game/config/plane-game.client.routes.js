@@ -23,6 +23,21 @@ angular.module('plane-game').config(['$stateProvider',
                         }
                     }
                 }
-            })
+            }).
+        state('plane-game.multi', {
+            url: '/multi',
+            views: {
+                'plane-canvas@plane-game': {
+                    templateUrl: 'modules/plane-game/views/plane-game-multi.client.view.html',
+                    controller: 'planeGameMultiController'
+                },
+                'header@plane-game': {
+                    controller: function($scope) {
+                        $scope.head = 'Plane Game Multi-Player';
+                        $scope.subHead = 'Press Enter to Start, Arrows to move, space to shoot';
+                    }
+                }
+            }
+        })
     }
 ]);

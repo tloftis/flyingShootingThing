@@ -4,8 +4,9 @@
 /* globals moment: true */
 
 // Reports controller
-angular.module('plane-game').controller('planeGameSingleController', ['$scope', '$state', 'Alerts', '$location',
+angular.module('plane-game').controller('planeGameMultiController', ['$scope', '$state', 'Alerts', '$location',
     function ($scope, $state, Alerts, $location) {
+        console.log('Multi player');
 
         var hostUrl = $location.$$protocol + '://' + $location.$$host + ':' + $location.$$port;
         $scope.socket = io(hostUrl,{ 'forceNew':true });
