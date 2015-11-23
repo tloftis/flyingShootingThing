@@ -23,6 +23,8 @@ module.exports = function(io){
 
             client.on('disconnect', function () {
                 delete clients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
+
+                players[multiClients[client.handshake.address].index].dead = true; //if player exist, remove it
                 delete multiClients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
             });
 
@@ -39,8 +41,7 @@ module.exports = function(io){
 
             //Multiplier game
             client.on('join-multiplier', function (data) {
-                players.push({ top: 50, left: 10 });
-                multiClients[client.handshake.address] = clients[key];
+                multiClients[client.handshake.address] = { client: clients[client.handshake.address], index: (players.push({ top: 50, left: 10 }) - 1)};
             });
 
             //Multiplier game
@@ -54,63 +55,9 @@ module.exports = function(io){
         }
     });
 
-    function getRandomArbitrary(min, max) {
-        return Math.floor(Math.random() * (max - min) + min);
-    }
-
-    var fBullets = [],
-        eBullets = [],
-        enemies = [],
-        players = [];
-
-    function addEnem(){
-        enemies.push({
-            top: getRandomArbitrary(0, 100),
-            left: 100,
-            topDif: 0,
-            dead: false
-        })
-    }
-
-    var planeInterval = setInterval(function(){
-        var enem = {};
-        var ran = 0;
-
+    var gameInterval = setInterval(function(){
         for(var i =0; i< enemies.length; i++){
-            enem =  enemies[i];
-            enem.left -= 1;
-
-            ran = getRandomArbitrary(0, 10);
-
-            if(ran === 3){
-                enem.topDif -= getRandomArbitrary(1, 3);
-            }
-
-            if(ran === 2){
-                enem.topDif += getRandomArbitrary(1, 3);
-            }
-
-            if(ran > 8){
-                eBullets.push({ top: enem.top, left: enem.left });
-            }
-
-            enem.top += enem.topDif;
-
-            if(enem.top < 0){
-                enem.top = 0;
-            }
-
-            if(enem.top > 100){
-                enem.top = 100;
-            }
-
-            if((enem.left < 0) || enem.dead){
-                enem.element.parentNode.removeChild(enem.element);
-                $scope.enemies.splice(i, 1);
-            }else{
-                enem.element.style.left = enem.currentLeft + '%';
-                enem.element.style.top = enem.currentTop + '%';
-            }
+            updateEnemy(enemies[i]);
         }
 
         for(var key in clients){
@@ -118,3 +65,61 @@ module.exports = function(io){
         }
     }, 50);
 };
+
+var fBullets = [],
+    eBullets = [],
+    enemies = [],
+    players = [];
+
+function addEnemy(){
+    enemies.push({
+        top: getRandomArbitrary(0, 100),
+        left: 100,
+        topDif: 0,
+        dead: false
+    })
+}
+
+function removePlayer(player){
+
+}
+
+function getRandomArbitrary(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+}
+
+function updateEnemy(enemy){
+    enemy.left -= 1;
+
+    var ran = getRandomArbitrary(0, 10);
+
+    if(ran === 3){
+        enemy.topDif -= getRandomArbitrary(1, 3);
+    }
+
+    if(ran === 2){
+        enemy.topDif += getRandomArbitrary(1, 3);
+    }
+
+    if(ran > 8){
+        eBullets.push({ top: enemy.top, left: enemy.left });
+    }
+
+    enemy.top += enemy.topDif;
+
+    if(enemy.top < 0){
+        enemy.top = 0;
+    }
+
+    if(enemy.top > 100){
+        enemy.top = 100;
+    }
+
+    if((enemy.left < 0) || enemy.dead){
+        enemy.element.parentNode.removeChild(enemy.element);
+        $scope.enemies.splice(i, 1);
+    }else{
+        enemy.element.style.left = enemy.currentLeft + '%';
+        enemy.element.style.top = enemy.currentTop + '%';
+    }
+}
