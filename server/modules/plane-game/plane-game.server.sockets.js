@@ -13,6 +13,12 @@ var log = require('../../../config/logger'),
     clients = {},
     multiClients;
 
+
+var fBullets = [],
+    eBullets = [],
+    enemies = [],
+    players = {};
+
 module.exports = function(io){
     var messages = [];
 
@@ -24,8 +30,10 @@ module.exports = function(io){
             client.on('disconnect', function () {
                 delete clients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
 
-                players[multiClients[client.handshake.address].index].dead = true; //if player exist, remove it
-                delete multiClients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
+                if(multiClients[client.handshake.address]){
+                    delete players[client.handshake.address]; //if player exist, remove it
+                    delete multiClients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
+                }
             });
 
             //Chating with the console
@@ -41,12 +49,8 @@ module.exports = function(io){
 
             //Multiplier game
             client.on('join-multiplier', function (data) {
-                multiClients[client.handshake.address] = { client: clients[client.handshake.address], index: (players.push({ top: 50, left: 10 }) - 1)};
-            });
-
-            //Multiplier game
-            client.on('multiplier-die', function (data) {
-                delete multiClients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
+                multiClients[client.handshake.address] = { client: clients[client.handshake.address], playerId: client.handshake.address };
+                players[client.handshake.address] = {top: 50, left: 10, mvL: false, mvR: false, mvU: false, mvD: false};
             });
         }
 
@@ -66,11 +70,6 @@ module.exports = function(io){
     }, 50);
 };
 
-var fBullets = [],
-    eBullets = [],
-    enemies = [],
-    players = [];
-
 function addEnemy(){
     enemies.push({
         top: getRandomArbitrary(0, 100),
@@ -80,15 +79,27 @@ function addEnemy(){
     })
 }
 
-function removePlayer(player){
+function createEMissle(enemy){
+    $scope.eMissles.push({
+        currentLeft: enemy.currentLeft,
+        currentTop: enemy.currentTop,
+        element: document.createElement("i")
+    });
+}
 
+function createFMissle(player){
+    $scope.fBullets.push({
+        currentLeft: enemy.currentLeft,
+        currentTop: enemy.currentTop,
+        element: document.createElement("i")
+    });
 }
 
 function getRandomArbitrary(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-function updateEnemy(enemy){
+function updateEnemy(enemy, index){
     enemy.left -= 1;
 
     var ran = getRandomArbitrary(0, 10);
@@ -117,9 +128,31 @@ function updateEnemy(enemy){
 
     if((enemy.left < 0) || enemy.dead){
         enemy.element.parentNode.removeChild(enemy.element);
-        $scope.enemies.splice(i, 1);
+        enemies.splice(index, 1);
     }else{
         enemy.element.style.left = enemy.currentLeft + '%';
         enemy.element.style.top = enemy.currentTop + '%';
+    }
+}
+
+function updateEMissle(missle, index){
+    missle.currentLeft -= 2;
+
+    if(missle.currentLeft < 0){
+        eMissles.splice(index, 1);
+    }else{
+        var window = 2;
+
+        for(var key in players){
+            var player = players[key];
+
+            if(( (player.currentLeft + window) > miss.currentLeft) && (player.currentLeft - window) < missle.currentLeft){
+                if(( (player.currentTop + window) > miss.currentTop) && (player.currentTop - window) < missle.currentTop){
+                    multiClients[key].client.emit('you-dead', {});
+                    delete multiClients[key];
+                    delete players[key];
+                }
+            }
+        }
     }
 }
