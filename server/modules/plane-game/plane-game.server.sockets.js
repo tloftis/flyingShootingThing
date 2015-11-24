@@ -36,7 +36,7 @@ module.exports = function(io){
                 }
             });
 
-            //Chating with the console
+            //Chatting with the console
             client.on('chat', function (data) {
                 for(var key in clients){
                     clients[key].client.emit('chat-get', {username: name, message: data});
@@ -50,7 +50,15 @@ module.exports = function(io){
             //Multiplier game
             client.on('join-multiplier', function (data) {
                 multiClients[client.handshake.address] = { client: clients[client.handshake.address], playerId: client.handshake.address };
-                players[client.handshake.address] = {top: 50, left: 10, mvL: false, mvR: false, mvU: false, mvD: false};
+                var player = players[client.handshake.address] = {top: 50, left: 10, mvL: false, mvR: false, mvU: false, mvD: false};
+
+                //Multiplier game
+                client.on('control-movement', function (data) {
+                    player.mvL = data.mvL || false;
+                    player.mvR = data.mvR || false;
+                    player.mvU = data.mvU || false;
+                    player.mvD = data.mvD || false;
+                });
             });
         }
 
@@ -60,8 +68,18 @@ module.exports = function(io){
     });
 
     var gameInterval = setInterval(function(){
-        for(var i =0; i< enemies.length; i++){
-            updateEnemy(enemies[i]);
+        var i = 0
+        for(i =0; i< enemies.length; i++){
+            updateEnemy(enemies[i], i);
+        }
+        for(i =0; i< eBullets.length; i++){
+            updateEMissle(eBullets[i], i);
+        }
+        for(i =0; i< fBullets.length; i++){
+            updateFMissle(fBullets[i], i);
+        }
+        for(i =0; i< eBullets.length; i++){
+            updateEMissle(eBullets[i], i);
         }
 
         for(var key in clients){
@@ -154,5 +172,47 @@ function updateEMissle(missle, index){
                 }
             }
         }
+    }
+}
+
+function updateFMissle(missle, index){
+    missle.currentLeft += 2;
+
+    if(missle.currentLeft > 100){
+        $scope.fMissles.splice(index, 1);
+    }else{
+        var window = 2,
+            enemy = {};
+
+        for(var j =0; j< enemies.length; j++){
+            enemy = enemies[j];
+
+            if(( (enemy.currentLeft + window) > missle.currentLeft) && (enemy.currentLeft - window) < missle.currentLeft){
+                if(( (enemy.currentTop + window) > missle.currentTop) && (enemy.currentTop - window) < missle.currentTop){
+                    $scope.fMissles.splice(index, 1);
+                }
+            }
+        }
+    }
+}
+
+function updatePlayer(player){
+    if(moveDown){
+        player.currentTop += 7;
+        if(player.currentTop > 100)
+            player.currentTop = 100;
+    }
+    if(moveUp){
+        player.currentTop -= 7;
+        if(player.currentTop < 0)
+            player.currentTop = 0;
+    }
+    if(moveLeft){
+        if(player.currentLeft < 100)
+            player.currentLeft += 0.5;
+    }
+    if(moveRight){
+        if(player.currentLeft > 0)
+            player.currentLeft -= 0.5;
     }
 }
