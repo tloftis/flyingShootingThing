@@ -7,6 +7,10 @@
 angular.module('plane-game').controller('planeGameMultiController', ['$scope', '$state', 'Alerts', '$location',
     function ($scope, $state, Alerts, $location) {
         console.log('Multi player');
+        $scope.players = [];
+        $scope.fMissles = [];
+        $scope.enemies = [];
+        $scope.eMissles = [];
 
         var hostUrl = $location.$$protocol + '://' + $location.$$host + ':' + $location.$$port;
         $scope.socket = io(hostUrl,{ 'forceNew':true });
@@ -28,276 +32,139 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
             console.log(data.username + ' : ' + data.message);
         });
 
-        console.log('single player');
+        $scope.socket.on('you-dead', function(data) {
+            console.log('You\'ve been un-alived');
+        });
 
-        $scope.eMissles = [];
-        $scope.fMissles = [];
-        $scope.enemies = [];
-        $scope.player = {};
+        $scope.socket.on('multiplier-update', function(data) {
+            data.players = Object.keys(data.players).map(function(key){ return( data.players[key] ); });
 
-        var moveLeft, moveRight, moveUp, moveDown;
+            //remove dead players, enemies, bullets
+            while(data.eMissles.length < $scope.eMissles.length){
+                $scope.eMissles[0].parentNode.removeChild($scope.eMissles[0]);
+                $scope.eMissles.shift();
+            }
+            while(data.fMissles.length < $scope.fMissles.length){
+                $scope.fMissles[0].parentNode.removeChild($scope.fMissles[0]);
+                $scope.fMissles.shift();
+            }
+            while(data.enemies.length < $scope.enemies.length){
+                $scope.enemies[0].parentNode.removeChild($scope.enemies[0]);
+                $scope.enemies.shift();
+            }
+            while(data.players.length < $scope.players.length){
+                $scope.players[0].parentNode.removeChild($scope.players[0]);
+                $scope.players.shift();
+            }
+
+            //add new enemies, bullets, players
+            while(data.players.length > $scope.players.length){
+                $scope.createPlayer();
+            }
+            while(data.enemies.length > $scope.enemies.length){
+                $scope.createEnemy();
+            }
+            while(data.fMissles.length > $scope.fMissles.length){
+                $scope.createBody();
+            }
+            while(data.eMissles.length > $scope.eMissles.length){
+                $scope.createEBody();
+            }
+
+            //update movements
+            var i = 0;
+            for(i = 0; i < data.eMissles.length; i++){
+                $scope.eMissles[i].style.left = data.eMissles[i].currentLeft + '%';
+                $scope.eMissles[i].style.top = data.eMissles[i].currentTop + '%';
+            }
+            for(i = 0; i < data.fMissles.length; i++){
+                $scope.fMissles[i].style.left = data.fMissles[i].currentLeft + '%';
+                $scope.fMissles[i].style.top = data.fMissles[i].currentTop + '%';
+            }
+            for(i = 0; i < data.enemies.length; i++){
+                $scope.enemies[i].style.left = data.enemies[i].currentLeft + '%';
+                $scope.enemies[i].style.top = data.enemies[i].currentTop + '%';
+            }
+            for(i = 0; i < data.players.length; i++){
+                $scope.players[i].style.left = data.players[i].currentLeft + '%';
+                $scope.players[i].style.top = data.players[i].currentTop + '%';
+            }
+        });
+
+        $scope.playerMv = {};
+
         var field = angular.element(document.getElementsByName('planeparent'));
 
-        $scope.left = function(){
-            if($scope.player.currentLeft < 100)
-                $scope.player.currentLeft += 0.5;
-        };
-
-        $scope.right = function(){
-            if($scope.player.currentLeft > 0)
-                $scope.player.currentLeft -= 0.5;
-        };
-
-        $scope.up = function(){
-            $scope.player.currentTop -= 7;
-            if($scope.player.currentTop < 0)
-                $scope.player.currentTop = 0;
-        };
-
-        $scope.down = function(){
-            $scope.player.currentTop += 7;
-            if($scope.player.currentTop > 100)
-                $scope.player.currentTop = 100;
-        };
-
         $scope.createBody = function(){
-            var missle = {
-                currentLeft: $scope.player.currentLeft,
-                currentTop: $scope.player.currentTop,
-                element: document.createElement("i")
-            };
+            var missle = document.createElement("i");
 
-            missle.element.className = 'fa fa-ellipsis-h';
-            missle.element.style.position = 'absolute';
-            missle.element.style.left = missle.currentLeft + '%';
-            missle.element.style.top = missle.currentTop + '%';
+            missle.className = 'fa fa-ellipsis-h';
+            missle.style.position = 'absolute';
+            missle.style.left = '-10%';
+            missle.style.top = '-10%';
 
-            angular.element(document.getElementsByName('planeparent')).append( missle.element);
+            field.append( missle);
 
             $scope.fMissles.push(missle);
         };
 
-        $scope.createEBody = function(enemy){
-            var missle = {
-                currentLeft: enemy.currentLeft,
-                currentTop: enemy.currentTop,
-                element: document.createElement("i")
-            };
+        $scope.createEBody = function(){
+            var missle = document.createElement("i");
 
-            missle.element.className = 'fa fa-ellipsis-h';
-            missle.element.style.position = 'absolute';
-            missle.element.style.left = missle.currentLeft + '%';
-            missle.element.style.top = missle.currentTop + '%';
+            missle.className = 'fa fa-ellipsis-h';
+            missle.style.position = 'absolute';
+            missle.style.left = '-10%';
+            missle.style.top = '-10%';
 
-            field.append( missle.element);
+            field.append( missle);
 
             $scope.eMissles.push(missle);
         };
 
-        $scope.createEnemy = function(){
-            var enemy = {
-                currentLeft: 100,
-                currentTop: getRandomArbitrary(0, 100),
-                topDiffer: 1,
-                dead: false,
-                element: document.createElement("i")
-            };
+        $scope.createEnemy = function(top, left){
+            var enemy = document.createElement("i");
 
-            enemy.element.className = 'fa fa-fighter-jet fa-rotate-180';
-            enemy.element.style.position = 'absolute';
-            enemy.element.style.left = enemy.currentLeft + '%';
-            enemy.element.style.top = enemy.currentTop + '%';
+            enemy.className = 'fa fa-fighter-jet fa-rotate-180';
+            enemy.style.position = 'absolute';
+            enemy.style.left = '-10%';
+            enemy.style.top = '-10%';
 
-            field.append( enemy.element);
+            field.append( enemy);
 
             $scope.enemies.push(enemy);
         };
 
         $scope.createPlayer = function(){
-            var player = {
-                currentLeft: 10,
-                currentTop: 50,
-                topDiffer: 1,
-                element: document.createElement("i")
-            };
+            var player = document.createElement("i");
 
-            player.element.className = 'fa fa-plane fa-rotate-45';
-            player.element.style.position = 'absolute';
-            player.element.style.left = player.currentLeft + '%';
-            player.element.style.top = player.currentTop + '%';
+            player.className = 'fa fa-plane fa-rotate-45';
+            player.style.position = 'absolute';
+            player.style.left = '-10%';
+            player.style.top = '-10%';
 
-            field.append( player.element);
+            field.append( player);
 
-            $scope.player = player;
+            $scope.players.push(player);
         };
-
-        $scope.restart = function(){
-            clearInterval(enemySpawnInterval);
-
-            while($scope.enemies.length){
-                $scope.enemies[0].element.parentNode.removeChild($scope.enemies[0].element);
-                $scope.enemies.splice(0, 1);
-            }
-            while($scope.fMissles.length){
-                $scope.fMissles[0].element.parentNode.removeChild($scope.fMissles[0].element);
-                $scope.fMissles.splice(0, 1);
-            }
-            while($scope.eMissles.length){
-                $scope.eMissles[0].element.parentNode.removeChild($scope.eMissles[0].element);
-                $scope.eMissles.splice(0, 1);
-            }
-
-            $scope.player.currentTop = 50;
-            $scope.player.currentLeft = 10;
-
-            $scope.$apply();
-        };
-
-        function getRandomArbitrary(min, max) {
-            return Math.floor(Math.random() * (max - min) + min);
-        }
-
-        var planeInterval = setInterval(function(){
-            if(moveDown){
-                $scope.down();
-            }
-            if(moveUp){
-                $scope.up();
-            }
-            if(moveLeft){
-                $scope.left();
-            }
-            if(moveRight){
-                $scope.right();
-            }
-
-            $scope.player.element.style.left = $scope.player.currentLeft + '%';
-            $scope.player.element.style.top = $scope.player.currentTop + '%';
-
-            $scope.$apply();
-        }, 50);
-
-        var bulletInterval = setInterval(function(){
-            var miss = {};
-            for(var i =0; i< $scope.fMissles.length; i++){
-                miss =  $scope.fMissles[i];
-                miss.currentLeft += 2;
-
-                if(miss.currentLeft > 100){
-                    miss.element.parentNode.removeChild(miss.element);
-                    $scope.fMissles.splice(i, 1);
-                }else{
-                    var window = 2,
-                        enemy = {};
-
-                    for(var j =0; j< $scope.enemies.length; j++){
-                        enemy = $scope.enemies[j];
-
-                        if(( (enemy.currentLeft + window) > miss.currentLeft) && (enemy.currentLeft - window) < miss.currentLeft){
-                            if(( (enemy.currentTop + window) > miss.currentTop) && (enemy.currentTop - window) < miss.currentTop){
-                                enemy.dead = true;
-                                console.log('hit');
-                            }
-                        }
-                    }
-
-                    miss.element.style.left = miss.currentLeft + '%';
-                }
-            }
-
-            $scope.$apply();
-        }, 50);
-
-        var eBulletInterval = setInterval(function(){
-            var miss = {};
-            for(var i =0; i< $scope.eMissles.length; i++){
-                miss =  $scope.eMissles[i];
-                miss.currentLeft -= 2;
-
-                if(miss.currentLeft < 0){
-                    miss.element.parentNode.removeChild(miss.element);
-                    $scope.eMissles.splice(i, 1);
-                }else{
-                    var window = 2,
-                        enemy = {};
-
-                    if(( ($scope.player.currentLeft + window) > miss.currentLeft) && ($scope.player.currentLeft - window) < miss.currentLeft){
-                        if(( ($scope.player.currentTop + window) > miss.currentTop) && ($scope.player.currentTop - window) < miss.currentTop){
-                            Alerts.addAlert('success', 'You\'ve been hit!');
-                            $scope.restart();
-                        }
-                    }
-
-                    miss.element.style.left = miss.currentLeft + '%';
-                }
-            }
-
-            $scope.$apply();
-        }, 50);
-
-
-        var enemyInterval = setInterval(function(){
-            var enem = {};
-            var ran = 0;
-
-            for(var i =0; i< $scope.enemies.length; i++){
-                enem =  $scope.enemies[i];
-                enem.currentLeft -= 1;
-
-                ran = getRandomArbitrary(0, 10);
-
-                if(ran === 3){
-                    enem.topDiffer -= getRandomArbitrary(1, 3);
-                    console.log('Adjust down');
-                }
-
-                if(ran === 2){
-                    enem.topDiffer += getRandomArbitrary(1, 3);
-                    console.log('Adjust up');
-                }
-
-                if(ran > 7){
-                    $scope.createEBody(enem);
-                    console.log('Shooting!');
-                }
-
-                enem.currentTop += enem.topDiffer;
-
-                if(enem.currentTop < 0){
-                    enem.currentTop = 0;
-                }
-                if(enem.currentTop > 100){
-                    enem.currentTop = 100;
-                }
-
-                if((enem.currentLeft < 0) || enem.dead){
-                    enem.element.parentNode.removeChild(enem.element);
-                    $scope.enemies.splice(i, 1);
-                }else{
-                    enem.element.style.left = enem.currentLeft + '%';
-                    enem.element.style.top = enem.currentTop + '%';
-                }
-            }
-
-            $scope.$apply();
-        }, 100);
-
-        var enemySpawnInterval;
 
         document.onkeydown = function(e){
             var evt = e || window.event;
 
             if(evt.keyCode === 40){
-                moveDown = true;
+                $scope.playerMv.mvD = true;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
             if(evt.keyCode === 38){
-                moveUp = true;
+                $scope.playerMv.mvU = true;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
             if(evt.keyCode == 37){
-                moveRight = true;
+                $scope.playerMv.mvR = true;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
             if(evt.keyCode == 39){
-                moveLeft = true;
+                $scope.playerMv.mvL = true;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
         };
 
@@ -305,26 +172,27 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
             var evt = e || window.event;
 
             if(evt.keyCode === 40){
-                moveDown = false;
+                $scope.playerMv.mvD = false;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
             if(evt.keyCode === 38){
-                moveUp = false;
+                $scope.playerMv.mvU = false;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
             if(evt.keyCode == 37){
-                moveRight = false;
+                $scope.playerMv.mvR = false;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
             if(evt.keyCode == 39){
-                moveLeft = false;
+                $scope.playerMv.mvL = false;
+                $scope.socket.emit('control-movement', $scope.playerMv);
             }
+
             if(evt.keyCode == 32){
-                $scope.createBody();
-            }
-            if(evt.keyCode == 13){
-                enemySpawnInterval = setInterval(function(){
-                    if(($scope.enemies.length <= 10) && (getRandomArbitrary(0, 10) > 8))
-                        $scope.createEnemy();
-                }, 100);
+                $scope.socket.emit('control-shoot', {});
             }
         };
+
+        $scope.socket.emit('join-multiplier', {});
     }
 ]);

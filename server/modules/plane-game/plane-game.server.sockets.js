@@ -11,11 +11,11 @@ var log = require('../../../config/logger'),
     _ = require('lodash'),
     async = require('async'),
     clients = {},
-    multiClients;
+    multiClients = {};
 
 
-var fBullets = [],
-    eBullets = [],
+var fMissles = [],
+    eMissles = [],
     enemies = [],
     players = {};
 
@@ -49,15 +49,23 @@ module.exports = function(io){
 
             //Multiplier game
             client.on('join-multiplier', function (data) {
-                multiClients[client.handshake.address] = { client: clients[client.handshake.address], playerId: client.handshake.address };
-                var player = players[client.handshake.address] = {top: 50, left: 10, mvL: false, mvR: false, mvU: false, mvD: false};
+                console.log(client.handshake.address + ' Is Playing');
+                multiClients[client.handshake.address] = client;
+                var player = players[client.handshake.address] = {currentTop: 50, currentLeft: 10, mvL: false, mvR: false, mvU: false, mvD: false};
 
                 //Multiplier game
                 client.on('control-movement', function (data) {
+                    console.log(client.handshake.address + 'reqest movement');
                     player.mvL = data.mvL || false;
                     player.mvR = data.mvR || false;
                     player.mvU = data.mvU || false;
                     player.mvD = data.mvD || false;
+                });
+
+                //Multiplier game
+                client.on('control-shoot', function (data) {
+                    console.log(client.handshake.address + 'request shooting');
+                    createFMissle(player);
                 });
             });
         }
@@ -68,48 +76,48 @@ module.exports = function(io){
     });
 
     var gameInterval = setInterval(function(){
-        var i = 0
+        var i = 0,
+            key;
+
         for(i =0; i< enemies.length; i++){
             updateEnemy(enemies[i], i);
         }
-        for(i =0; i< eBullets.length; i++){
-            updateEMissle(eBullets[i], i);
+        for(i =0; i< eMissles.length; i++){
+            updateEMissle(eMissles[i], i);
         }
-        for(i =0; i< fBullets.length; i++){
-            updateFMissle(fBullets[i], i);
+        for(i =0; i< fMissles.length; i++){
+            updateFMissle(fMissles[i], i);
         }
-        for(i =0; i< eBullets.length; i++){
-            updateEMissle(eBullets[i], i);
+        for(key in players){
+            updatePlayer(players[key], key);
         }
 
-        for(var key in clients){
-            multiClients[key].client.emit('multiplier-update', {username: name, message: data});
+        for(key in multiClients){
+            multiClients[key].emit('multiplier-update', {enemies: enemies, eMissles: eMissles, fMissles: fMissles, players: players, player: players[key]});
         }
     }, 50);
 };
 
-function addEnemy(){
+function createEnemy(){
     enemies.push({
-        top: getRandomArbitrary(0, 100),
-        left: 100,
+        currentTop: getRandomArbitrary(0, 100),
+        currentLeft: 100,
         topDif: 0,
         dead: false
     })
 }
 
 function createEMissle(enemy){
-    $scope.eMissles.push({
+    eMissles.push({
         currentLeft: enemy.currentLeft,
-        currentTop: enemy.currentTop,
-        element: document.createElement("i")
+        currentTop: enemy.currentTop
     });
 }
 
 function createFMissle(player){
-    $scope.fBullets.push({
-        currentLeft: enemy.currentLeft,
-        currentTop: enemy.currentTop,
-        element: document.createElement("i")
+    fMissles.push({
+        currentLeft: player.currentLeft,
+        currentTop: player.currentTop
     });
 }
 
@@ -118,7 +126,7 @@ function getRandomArbitrary(min, max) {
 }
 
 function updateEnemy(enemy, index){
-    enemy.left -= 1;
+    enemy.currentLeft -= 1;
 
     var ran = getRandomArbitrary(0, 10);
 
@@ -131,25 +139,21 @@ function updateEnemy(enemy, index){
     }
 
     if(ran > 8){
-        eBullets.push({ top: enemy.top, left: enemy.left });
+        eMissles.push({ currentTop: enemy.currentTop, currentLeft: enemy.currentLeft });
     }
 
-    enemy.top += enemy.topDif;
+    enemy.currentTop += enemy.topDif;
 
-    if(enemy.top < 0){
-        enemy.top = 0;
+    if(enemy.currentTop < 0){
+        enemy.currentTop = 0;
     }
 
-    if(enemy.top > 100){
-        enemy.top = 100;
+    if(enemy.currentTop > 100){
+        enemy.currentTop = 100;
     }
 
-    if((enemy.left < 0) || enemy.dead){
-        enemy.element.parentNode.removeChild(enemy.element);
+    if((enemy.currentLeft < 0) || enemy.dead){
         enemies.splice(index, 1);
-    }else{
-        enemy.element.style.left = enemy.currentLeft + '%';
-        enemy.element.style.top = enemy.currentTop + '%';
     }
 }
 
@@ -179,7 +183,7 @@ function updateFMissle(missle, index){
     missle.currentLeft += 2;
 
     if(missle.currentLeft > 100){
-        $scope.fMissles.splice(index, 1);
+        fMissles.splice(index, 1);
     }else{
         var window = 2,
             enemy = {};
@@ -189,7 +193,7 @@ function updateFMissle(missle, index){
 
             if(( (enemy.currentLeft + window) > missle.currentLeft) && (enemy.currentLeft - window) < missle.currentLeft){
                 if(( (enemy.currentTop + window) > missle.currentTop) && (enemy.currentTop - window) < missle.currentTop){
-                    $scope.fMissles.splice(index, 1);
+                    fMissles.splice(index, 1);
                 }
             }
         }
@@ -197,21 +201,21 @@ function updateFMissle(missle, index){
 }
 
 function updatePlayer(player){
-    if(moveDown){
+    if(player.mvD){
         player.currentTop += 7;
         if(player.currentTop > 100)
             player.currentTop = 100;
     }
-    if(moveUp){
+    if(player.mvU){
         player.currentTop -= 7;
         if(player.currentTop < 0)
             player.currentTop = 0;
     }
-    if(moveLeft){
+    if(player.mvL){
         if(player.currentLeft < 100)
             player.currentLeft += 0.5;
     }
-    if(moveRight){
+    if(player.mvR){
         if(player.currentLeft > 0)
             player.currentLeft -= 0.5;
     }
