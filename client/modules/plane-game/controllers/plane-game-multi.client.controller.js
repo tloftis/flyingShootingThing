@@ -192,7 +192,5 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
                 $scope.socket.emit('control-shoot', {});
             }
         };
-
-        $scope.socket.emit('join-multiplier', {});
     }
 ]);

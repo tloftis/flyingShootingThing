@@ -17,7 +17,9 @@ var log = require('../../../config/logger'),
 var fMissles = [],
     eMissles = [],
     enemies = [],
-    players = {};
+    players = {},
+    playerCnt = 0,
+    enemySpawnInterval;
 
 module.exports = function(io){
     var messages = [];
@@ -31,6 +33,7 @@ module.exports = function(io){
                 delete clients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
 
                 if(multiClients[client.handshake.address]){
+                    playerCnt--;
                     delete players[client.handshake.address]; //if player exist, remove it
                     delete multiClients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
                 }
@@ -49,13 +52,13 @@ module.exports = function(io){
 
             //Multiplier game
             client.on('join-multiplier', function (data) {
-                console.log(client.handshake.address + ' Is Playing');
+                playerCnt++;
+
                 multiClients[client.handshake.address] = client;
                 var player = players[client.handshake.address] = {currentTop: 50, currentLeft: 10, mvL: false, mvR: false, mvU: false, mvD: false};
 
                 //Multiplier game
                 client.on('control-movement', function (data) {
-                    console.log(client.handshake.address + 'reqest movement');
                     player.mvL = data.mvL || false;
                     player.mvR = data.mvR || false;
                     player.mvU = data.mvU || false;
@@ -64,8 +67,22 @@ module.exports = function(io){
 
                 //Multiplier game
                 client.on('control-shoot', function (data) {
-                    console.log(client.handshake.address + 'request shooting');
                     createFMissle(player);
+                });
+
+                //Multiplier game
+                client.on('start-game', function (data) {
+                    console.log('Attempting to Start Game');
+                    console.log(enemySpawnInterval);
+                    if(!enemySpawnInterval){
+                        console.log('Starting Game');
+
+                        enemySpawnInterval = setInterval(function(){
+                            var ran = getRandomArbitrary(1, 5);
+                            if((enemies.length <= 10) && (ran === 5))
+                                createEnemy();
+                        }, 100);
+                    }
                 });
             });
         }
@@ -76,6 +93,10 @@ module.exports = function(io){
     });
 
     var gameInterval = setInterval(function(){
+        if(playerCnt === 0){
+            restartGame();
+        }
+
         var i = 0,
             key;
 
@@ -93,7 +114,7 @@ module.exports = function(io){
         }
 
         for(key in multiClients){
-            multiClients[key].emit('multiplier-update', {enemies: enemies, eMissles: eMissles, fMissles: fMissles, players: players, player: players[key]});
+            multiClients[key].emit('multiplier-update', {enemies: enemies, eMissles: eMissles, fMissles: fMissles, players: players});
         }
     }, 50);
 };
@@ -122,24 +143,24 @@ function createFMissle(player){
 }
 
 function getRandomArbitrary(min, max) {
-    return Math.floor(Math.random() * (max - min) + min);
+    return Math.floor(Math.random() * (++max - min) + min);
 }
 
 function updateEnemy(enemy, index){
     enemy.currentLeft -= 1;
 
-    var ran = getRandomArbitrary(0, 10);
+    var ran = getRandomArbitrary(0, 15);
 
-    if(ran === 3){
-        enemy.topDif -= getRandomArbitrary(1, 3);
+    if(ran === 3 || enemy.currentTop === 100){
+        enemy.topDif -= getRandomArbitrary(1, 2);
     }
 
-    if(ran === 2){
-        enemy.topDif += getRandomArbitrary(1, 3);
+    if(ran === 2 || enemy.currentTop === 0){
+        enemy.topDif += getRandomArbitrary(1, 2);
     }
 
-    if(ran > 8){
-        eMissles.push({ currentTop: enemy.currentTop, currentLeft: enemy.currentLeft });
+    if(ran === 10){
+        createEMissle(enemy);
     }
 
     enemy.currentTop += enemy.topDif;
@@ -168,11 +189,11 @@ function updateEMissle(missle, index){
         for(var key in players){
             var player = players[key];
 
-            if(( (player.currentLeft + window) > miss.currentLeft) && (player.currentLeft - window) < missle.currentLeft){
-                if(( (player.currentTop + window) > miss.currentTop) && (player.currentTop - window) < missle.currentTop){
-                    multiClients[key].client.emit('you-dead', {});
-                    delete multiClients[key];
+            if(( (player.currentLeft + window) > missle.currentLeft) && (player.currentLeft - window) < missle.currentLeft){
+                if(( (player.currentTop + window) > missle.currentTop) && (player.currentTop - window) < missle.currentTop){
+                    multiClients[key].emit('you-dead', {});
                     delete players[key];
+                    playerCnt--;
                 }
             }
         }
@@ -219,4 +240,15 @@ function updatePlayer(player){
         if(player.currentLeft > 0)
             player.currentLeft -= 0.5;
     }
+}
+
+function restartGame(){
+    if(enemySpawnInterval){
+        clearInterval(enemySpawnInterval);
+        enemySpawnInterval = undefined;
+    }
+
+    enemies = [];
+    fMissles = [];
+    eMissles = [];
 }
