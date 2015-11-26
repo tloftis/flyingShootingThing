@@ -53,37 +53,38 @@ module.exports = function(io){
             //Multiplier game
             client.on('join-multiplier', function (data) {
                 playerCnt++;
+                if(!multiClients[client.handshake.address]){
+                    multiClients[client.handshake.address] = client;
+                    var player = players[client.handshake.address] = {currentTop: 50, currentLeft: 10, mvL: false, mvR: false, mvU: false, mvD: false};
 
-                multiClients[client.handshake.address] = client;
-                var player = players[client.handshake.address] = {currentTop: 50, currentLeft: 10, mvL: false, mvR: false, mvU: false, mvD: false};
+                    //Multiplier game
+                    client.on('control-movement', function (data) {
+                        player.mvL = data.mvL || false;
+                        player.mvR = data.mvR || false;
+                        player.mvU = data.mvU || false;
+                        player.mvD = data.mvD || false;
+                    });
 
-                //Multiplier game
-                client.on('control-movement', function (data) {
-                    player.mvL = data.mvL || false;
-                    player.mvR = data.mvR || false;
-                    player.mvU = data.mvU || false;
-                    player.mvD = data.mvD || false;
-                });
+                    //Multiplier game
+                    client.on('control-shoot', function (data) {
+                        createFMissle(player);
+                    });
 
-                //Multiplier game
-                client.on('control-shoot', function (data) {
-                    createFMissle(player);
-                });
+                    //Multiplier game
+                    client.on('start-game', function (data) {
+                        console.log('Attempting to Start Game');
+                        console.log(enemySpawnInterval);
+                        if(!enemySpawnInterval){
+                            console.log('Starting Game');
 
-                //Multiplier game
-                client.on('start-game', function (data) {
-                    console.log('Attempting to Start Game');
-                    console.log(enemySpawnInterval);
-                    if(!enemySpawnInterval){
-                        console.log('Starting Game');
-
-                        enemySpawnInterval = setInterval(function(){
-                            var ran = getRandomArbitrary(1, 5);
-                            if((enemies.length <= 10) && (ran === 5))
-                                createEnemy();
-                        }, 100);
-                    }
-                });
+                            enemySpawnInterval = setInterval(function(){
+                                var ran = getRandomArbitrary(1, 5);
+                                if((enemies.length <= 10) && (ran === 5))
+                                    createEnemy();
+                            }, 100);
+                        }
+                    });
+                }
             });
         }
 
@@ -92,29 +93,45 @@ module.exports = function(io){
         }
     });
 
+    //This dictates the update and movement rate of all things in game
     var gameInterval = setInterval(function(){
+        //If no players then reset the game
         if(playerCnt === 0){
             restartGame();
         }
 
         var i = 0,
-            key;
+            key,
+            client;
 
+        //updates the movements of all enemies
         for(i =0; i< enemies.length; i++){
             updateEnemy(enemies[i], i);
         }
+
+        //updates the movements of all enemy bullets
         for(i =0; i< eMissles.length; i++){
             updateEMissle(eMissles[i], i);
         }
+
+        //updates the movements of all friendly bullets
         for(i =0; i< fMissles.length; i++){
             updateFMissle(fMissles[i], i);
         }
+
+        //updates all players movements
         for(key in players){
             updatePlayer(players[key], key);
         }
 
+        //This makes enemies shoot, random enemy at random time
+        if(getRandomArbitrary(1, 7) === 5 && enemies.length)
+            createEMissle(enemies[getRandomArbitrary(0, (enemies.length -1))]);
+
+        //Send all players an update of all positions of bullets, players and enemies
         for(key in multiClients){
-            multiClients[key].emit('multiplier-update', {enemies: enemies, eMissles: eMissles, fMissles: fMissles, players: players});
+            client = multiClients[key];
+            client.emit('multiplier-update', {enemies: enemies, eMissles: eMissles, fMissles: fMissles, players: players, id: client.handshake.address});
         }
     }, 50);
 };
@@ -129,20 +146,23 @@ function createEnemy(){
 }
 
 function createEMissle(enemy){
-    eMissles.push({
-        currentLeft: enemy.currentLeft,
-        currentTop: enemy.currentTop
-    });
+    if(enemy)
+        eMissles.push({
+            currentLeft: enemy.currentLeft,
+            currentTop: enemy.currentTop
+        });
 }
 
 function createFMissle(player){
-    fMissles.push({
-        currentLeft: player.currentLeft,
-        currentTop: player.currentTop
-    });
+    if(player)
+        fMissles.push({
+            currentLeft: player.currentLeft,
+            currentTop: player.currentTop
+        });
 }
 
 function getRandomArbitrary(min, max) {
+    if(min >= max) return min;
     return Math.floor(Math.random() * (++max - min) + min);
 }
 
@@ -160,7 +180,6 @@ function updateEnemy(enemy, index){
     }
 
     if(ran === 10){
-        createEMissle(enemy);
     }
 
     enemy.currentTop += enemy.topDif;
@@ -215,6 +234,7 @@ function updateFMissle(missle, index){
             if(( (enemy.currentLeft + window) > missle.currentLeft) && (enemy.currentLeft - window) < missle.currentLeft){
                 if(( (enemy.currentTop + window) > missle.currentTop) && (enemy.currentTop - window) < missle.currentTop){
                     fMissles.splice(index, 1);
+                    enemies.splice(j, 1);
                 }
             }
         }

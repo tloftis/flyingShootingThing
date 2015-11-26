@@ -1,6 +1,6 @@
 <section class="prepend-top-10" ng-init="createPlayer()">
-    <button ng-click="socket.emit('join-multiplier', {});">Join</button>
-    <button ng-click="socket.emit('start-game', {});">Start</button>
+    <button class="btn btn-info" ng-click="socket.emit('join-multiplier', {});">Join</button>
+    <button class="btn btn-info"  ng-click="socket.emit('start-game', {});">Start</button>
     <div style="height:50vh; background-color: #0a0a0a" name="planeparent">
     </div>
 </section>

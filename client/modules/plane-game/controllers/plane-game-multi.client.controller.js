@@ -7,10 +7,15 @@
 angular.module('plane-game').controller('planeGameMultiController', ['$scope', '$state', 'Alerts', '$location',
     function ($scope, $state, Alerts, $location) {
         console.log('Multi player');
+
+        $scope.playerMv = {};
         $scope.players = [];
         $scope.fMissles = [];
         $scope.enemies = [];
         $scope.eMissles = [];
+
+        var field = angular.element(document.getElementsByName('planeparent'));
+        var playerBaseClass = 'fa fa-plane fa-rotate-45 ';
 
         var hostUrl = $location.$$protocol + '://' + $location.$$host + ':' + $location.$$port;
         $scope.socket = io(hostUrl,{ 'forceNew':true });
@@ -37,6 +42,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
         });
 
         $scope.socket.on('multiplier-update', function(data) {
+            data.players[data.id].class = 'text-success';
             data.players = Object.keys(data.players).map(function(key){ return( data.players[key] ); });
 
             //remove dead players, enemies, bullets
@@ -88,12 +94,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
             for(i = 0; i < data.players.length; i++){
                 $scope.players[i].style.left = data.players[i].currentLeft + '%';
                 $scope.players[i].style.top = data.players[i].currentTop + '%';
+                $scope.players[i].className = playerBaseClass + ' ' + data.players[i].class;
             }
         });
-
-        $scope.playerMv = {};
-
-        var field = angular.element(document.getElementsByName('planeparent'));
 
         $scope.createBody = function(){
             var missle = document.createElement("i");
@@ -111,7 +114,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
         $scope.createEBody = function(){
             var missle = document.createElement("i");
 
-            missle.className = 'fa fa-ellipsis-h';
+            missle.className = 'fa fa-ellipsis-h text-danger';
             missle.style.position = 'absolute';
             missle.style.left = '-10%';
             missle.style.top = '-10%';
@@ -124,7 +127,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
         $scope.createEnemy = function(top, left){
             var enemy = document.createElement("i");
 
-            enemy.className = 'fa fa-fighter-jet fa-rotate-180';
+            enemy.className = 'fa fa-fighter-jet fa-rotate-180 text-muted';
             enemy.style.position = 'absolute';
             enemy.style.left = '-10%';
             enemy.style.top = '-10%';
@@ -137,7 +140,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
         $scope.createPlayer = function(){
             var player = document.createElement("i");
 
-            player.className = 'fa fa-plane fa-rotate-45';
+            player.className = playerBaseClass;
             player.style.position = 'absolute';
             player.style.left = '-10%';
             player.style.top = '-10%';
@@ -145,6 +148,10 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
             field.append( player);
 
             $scope.players.push(player);
+        };
+
+        document.onclick = function() {
+            $scope.socket.emit('control-shoot', {});
         };
 
         document.onkeydown = function(e){
@@ -166,6 +173,10 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
                 $scope.playerMv.mvL = true;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }
+
+            if(evt.keyCode == 32){
+                $scope.socket.emit('control-shoot', {});
+            }
         };
 
         document.onkeyup = function(e){
@@ -186,10 +197,6 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
             if(evt.keyCode == 39){
                 $scope.playerMv.mvL = false;
                 $scope.socket.emit('control-movement', $scope.playerMv);
-            }
-
-            if(evt.keyCode == 32){
-                $scope.socket.emit('control-shoot', {});
             }
         };
     }
