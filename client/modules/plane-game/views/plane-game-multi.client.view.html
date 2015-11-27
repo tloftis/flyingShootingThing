@@ -1,4 +1,4 @@
-<section class="prepend-top-10" ng-init="createPlayer()">
+<section class="prepend-top-10" ng-init="init()">
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
         <button class="btn btn-info" ng-click="socket.emit('join-multiplier', {});"  style="margin-right: 2%;">Join</button>
         <button class="btn btn-warning"  ng-click="socket.emit('start-game', {});">Start</button>
