@@ -34,24 +34,23 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
 
         $scope.socket.on('you-dead', function(data) {
             console.log('You\'ve been un-alived');
-
-            $scope.player.parentNode.removeChild($scope.fMissles[0]);
-            $scope.player = {};
+            updatePos($scope.player, {currentTop: -10, currentLeft: -10});
+            //$scope.player.parentNode.removeChild($scope.player);
         });
 
         $scope.socket.on('multiplier-update', function(data) {
             //remove dead players, enemies, bullets
             while(data.eMissles.length < $scope.eMissles.length)
-                removeEMissles(eMissles[0], 0);
+                removeEMissles($scope.eMissles[0], 0);
 
             while(data.fMissles.length < $scope.fMissles.length)
-                removeFMissle(fMissles[0], 0);
+                removeFMissle($scope.fMissles[0], 0);
 
             while(data.enemies.length < $scope.enemies.length)
-                removeEnemy(enemies[0], 0);
+                removeEnemy($scope.enemies[0], 0);
 
             while(data.players.length < $scope.players.length)
-                removePlayer(players[0], 0);
+                removePlayer($scope.players[0], 0);
 
             //add new enemies, bullets, players
             while(data.players.length > $scope.players.length)
@@ -86,28 +85,28 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
 
         //Element removal functions
         function removeFMissle(missle, index){
-            if(missle){
+            if(missle.parentNode){
                 missle.parentNode.removeChild(missle);
                 $scope.fMissles.splice(index, 1);
             }
         }
 
         function removeEMissles(missle, index){
-            if(missle){
+            if(missle.parentNode){
                 missle.parentNode.removeChild(missle);
                 $scope.eMissles.splice(index, 1);
             }
         }
 
         function removeEnemy(enemy, index){
-            if(enemy){
+            if(enemy.parentNode){
                 enemy.parentNode.removeChild(enemy);
                 $scope.enemies.splice(index, 1);
             }
         }
 
         function removePlayer(player, index){
-            if(player){
+            if(player.parentNode){
                 player.parentNode.removeChild(player);
                 $scope.players.splice(index, 1);
             }
@@ -115,8 +114,10 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
 
         //Element Position movement functions
         function updatePos(element, data){
-            element.style.left = data.currentLeft + '%';
-            element.style.top = data.currentTop + '%';
+            if(element.style){
+                element.style.left = data.currentLeft + '%';
+                element.style.top = data.currentTop + '%';
+            }
         }
 
         //Element creation functions
