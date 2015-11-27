@@ -18,6 +18,9 @@ var fMissles = [],
     eMissles = [],
     enemies = [],
     players = {},
+    gameRate = 25, //in Milliseconds
+    playerMvVert = 5,
+    playerMvHoz = 0.75,
     playerCnt = 0,
     enemySpawnInterval;
 
@@ -26,8 +29,8 @@ module.exports = function(io){
 
     //Initialization and disconnection
     io.on('connection', function (client) {
-        function indivualClients(client, name){
-            clients[client.handshake.address] = {client: client, name: name };
+        function indivualClients(client){
+            clients[client.handshake.address] = client;
 
             client.on('disconnect', function () {
                 delete clients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
@@ -37,17 +40,6 @@ module.exports = function(io){
                     delete players[client.handshake.address]; //if player exist, remove it
                     delete multiClients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
                 }
-            });
-
-            //Chatting with the console
-            client.on('chat', function (data) {
-                for(var key in clients){
-                    clients[key].client.emit('chat-get', {username: name, message: data});
-                }
-            });
-
-            client.on('chat-setname', function (data) {
-                name = data;
             });
 
             //Multiplier game
@@ -89,7 +81,7 @@ module.exports = function(io){
         }
 
         if(clients[client.handshake.address] === undefined){
-            indivualClients(client, 'Borg'); //separate out the client from the scope by calling a function instead
+            indivualClients(client); //separate out the client from the scope by calling a function instead
         }
     });
 
@@ -133,7 +125,7 @@ module.exports = function(io){
             client = multiClients[key];
             client.emit('multiplier-update', {enemies: enemies, eMissles: eMissles, fMissles: fMissles, players: players, id: client.handshake.address});
         }
-    }, 50);
+    }, gameRate);
 };
 
 function createEnemy(){
@@ -243,22 +235,22 @@ function updateFMissle(missle, index){
 
 function updatePlayer(player){
     if(player.mvD){
-        player.currentTop += 7;
+        player.currentTop += playerMvVert;
         if(player.currentTop > 100)
             player.currentTop = 100;
     }
     if(player.mvU){
-        player.currentTop -= 7;
+        player.currentTop -= playerMvVert;
         if(player.currentTop < 0)
             player.currentTop = 0;
     }
     if(player.mvL){
         if(player.currentLeft < 100)
-            player.currentLeft += 0.5;
+            player.currentLeft += playerMvHoz;
     }
     if(player.mvR){
         if(player.currentLeft > 0)
-            player.currentLeft -= 0.5;
+            player.currentLeft -= playerMvHoz;
     }
 }
 

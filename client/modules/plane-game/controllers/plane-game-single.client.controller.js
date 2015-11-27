@@ -4,27 +4,14 @@
 /* globals moment: true */
 
 // Reports controller
-angular.module('plane-game').controller('planeGameSingleController', ['$scope', '$state', 'Alerts', '$location',
-    function ($scope, $state, Alerts, $location) {
+angular.module('plane-game').controller('planeGameSingleController', ['$rootScope', '$scope', '$state', 'Alerts',
+    function ($rootScope, $scope, $state, Alerts) {
 
-        var hostUrl = $location.$$protocol + '://' + $location.$$host + ':' + $location.$$port;
-        $scope.socket = io(hostUrl,{ 'forceNew':true });
+        $scope.socket = $rootScope.socket;
 
         //Disconnect when the view is clicked off of
         $scope.$on('$destroy', function() {
             $scope.socket.io.disconnect();
-        });
-
-        window.chat = function(data){
-            $scope.socket.emit('chat', data);
-        };
-
-        window.chatSetName = function(data){
-            $scope.socket.emit('chat-setname', data);
-        };
-
-        $scope.socket.on('chat-get', function(data) {
-            console.log(data.username + ' : ' + data.message);
         });
 
         console.log('single player');

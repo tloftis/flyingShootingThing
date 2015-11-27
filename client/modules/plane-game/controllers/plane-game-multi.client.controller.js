@@ -4,8 +4,8 @@
 /* globals moment: true */
 
 // Reports controller
-angular.module('plane-game').controller('planeGameMultiController', ['$scope', '$state', 'Alerts', '$location',
-    function ($scope, $state, Alerts, $location) {
+angular.module('plane-game').controller('planeGameMultiController', ['$rootScope', '$scope', '$state', 'Alerts', '$location',
+    function ($rootScope, $scope, $state, Alerts, $location) {
         console.log('Multi player');
 
         $scope.playerMv = {};
@@ -17,13 +17,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
         var field = angular.element(document.getElementsByName('planeparent'));
         var playerBaseClass = 'fa fa-plane fa-rotate-45 ';
 
-        var hostUrl = $location.$$protocol + '://' + $location.$$host + ':' + $location.$$port;
-        $scope.socket = io(hostUrl,{ 'forceNew':true });
-
-        //Disconnect when the view is clicked off of
-        $scope.$on('$destroy', function() {
-            $scope.socket.io.disconnect();
-        });
+        $scope.socket = $rootScope.socket;
 
         window.chat = function(data){
             $scope.socket.emit('chat', data);
@@ -32,10 +26,6 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
         window.chatSetName = function(data){
             $scope.socket.emit('chat-setname', data);
         };
-
-        $scope.socket.on('chat-get', function(data) {
-            console.log(data.username + ' : ' + data.message);
-        });
 
         $scope.socket.on('you-dead', function(data) {
             console.log('You\'ve been un-alived');
@@ -165,16 +155,16 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
                 $scope.playerMv.mvU = true;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }
-            if(evt.keyCode == 37){
+            if(evt.keyCode === 37){
                 $scope.playerMv.mvR = true;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }
-            if(evt.keyCode == 39){
+            if(evt.keyCode === 39){
                 $scope.playerMv.mvL = true;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }
 
-            if(evt.keyCode == 32){
+            if(evt.keyCode === 32 && !evt.repeat){
                 $scope.socket.emit('control-shoot', {});
             }
         };
@@ -190,11 +180,11 @@ angular.module('plane-game').controller('planeGameMultiController', ['$scope', '
                 $scope.playerMv.mvU = false;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }
-            if(evt.keyCode == 37){
+            if(evt.keyCode === 37){
                 $scope.playerMv.mvR = false;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }
-            if(evt.keyCode == 39){
+            if(evt.keyCode === 39){
                 $scope.playerMv.mvL = false;
                 $scope.socket.emit('control-movement', $scope.playerMv);
             }

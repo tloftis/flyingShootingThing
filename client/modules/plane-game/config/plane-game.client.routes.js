@@ -36,6 +36,10 @@ angular.module('plane-game').config(['$stateProvider',
                         $scope.head = 'Plane Game Multi-Player';
                         $scope.subHead = 'Press Enter to Start, Arrows to move, space to shoot';
                     }
+                },
+                'chat-canvas@plane-game': {
+                    templateUrl: 'modules/chat/views/chat.client.view.html',
+                    controller: 'chatController'
                 }
             }
         })
