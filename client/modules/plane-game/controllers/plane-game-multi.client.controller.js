@@ -162,7 +162,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         var createBody = function(){
             var missle = document.createElement("i");
 
-            missle.className = 'fa fa-ellipsis-h';
+            missle.className = 'fa fa-ellipsis-h text-warning';
             missle.style.position = 'absolute';
             missle.style.left = '-10%';
             missle.style.top = '-10%';
