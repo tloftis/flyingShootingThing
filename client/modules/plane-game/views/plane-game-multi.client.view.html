@@ -2,6 +2,15 @@
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
         <button class="btn btn-info" ng-click="socket.emit('join-multiplier', {});"  style="margin-right: 2%;">Join</button>
         <button class="btn btn-warning"  ng-click="socket.emit('start-game', {});">Start</button>
+
+        <div class="pull-right">
+            <label>High Score:</label>
+            <pre class="prepend-top-10" style="width: 100px">{{ highScore }}</pre>
+        </div>
+        <div class="pull-right" style="margin-right: 2%;">
+            <label>Your Score:</label>
+            <pre class="prepend-top-10" style="width: 100px" ng-class="{ 'bg-success': playerData.score === highScore}">{{ playerData.score }}</pre>
+        </div>
     </div>
 
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 1%;">
@@ -10,7 +19,9 @@
     </div>
 
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <label>Framerate:</label>
-        <pre style="width: 100px">{{ average.toFixed(2) }}</pre>
+        <div class="pull-left">
+            <label  style="margin-right: 1%;">Refresh Rate {ms):</label>
+            <pre class="prepend-top-10" style="width: 140px">{{ average.toFixed(2) }}</pre>
+        </div>
     </div>
 </section>

@@ -14,7 +14,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         $scope.eMissles = [];
         $scope.average = 0;
         $scope.socket = socketService;
-        
+        $scope.playerData = {score: 0};
+        $scope.highScore = 0;
+
         $scope.init = function(){
             $scope.player = createPlayer();
             $scope.player.className += ' text-success';
@@ -27,6 +29,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         $scope.$on('$destroy', function() {
             $scope.socket.removeListener('you-dead', playerDeath);
             $scope.socket.removeListener('multiplier-update', updateElements);
+            $scope.socket.emit('good-bye', {});
         });
 
         //Allow chat though the console
@@ -106,6 +109,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
             $scope.$apply(function(){
                 $scope.average = time/averages.length;
+                if(data.player.score)
+                    $scope.playerData = data.player;
+                $scope.highScore = data.highScore || $scope.highScore;
             });
         };
 

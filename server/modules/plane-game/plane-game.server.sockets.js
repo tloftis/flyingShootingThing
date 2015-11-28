@@ -20,6 +20,7 @@ var fMissles = [],
     enemySpawnInterval,
     updatePlayerMv = {},
     shoot = {},
+    leaveMultiplayer = {},
     gameRate = 25, //in Milliseconds
     playerMvVert = 5,
     playerMvHoz = 0.75,
@@ -42,11 +43,11 @@ module.exports = function(io){
 
             //Multiplier game
             client.on('join-multiplier', function (data) {
-                playerCnt++;
                 var id = client.handshake.address;
 
                 if(!multiClients[id]){
                     multiClients[id] = client;
+
                     var oldPlayers = {};
 
                     for(var key in players)
@@ -59,12 +60,15 @@ module.exports = function(io){
                         mvR: false,
                         mvU: false,
                         mvD: false,
-                        players: oldPlayers
+                        score: 0,
+                        players: oldPlayers,
+                        id: id
                     };
 
                     for(var key in players)
                         players[key].players[id] = player;
 
+                    playerCnt++;
                     players[id] = player;
 
                     //Multiplier game
@@ -80,8 +84,15 @@ module.exports = function(io){
                         createFMissle(player);
                     };
 
+                    //Multiplier game
+                    leaveMultiplayer[id] = function() {
+                        removePlayer(id);
+                        delete multiClients[id];
+                    };
+
                     client.on('control-movement', updatePlayerMv[id]);
                     client.on('control-shoot', shoot[id]);
+                    client.on('good-bye', leaveMultiplayer[id]);
                     client.on('start-game', startGame);
                 }
             });
@@ -90,6 +101,8 @@ module.exports = function(io){
         if(clients[client.handshake.address] === undefined)
             indivualClients(client); //I didn't want some if statement that just tabbed off the screen, so this worked well
     });
+
+    var highScore = 0;
 
     //This dictates the update and movement rate of all things in game
     var gameInterval = setInterval(function(){
@@ -114,8 +127,13 @@ module.exports = function(io){
             updateFMissle(fMissles[i], i);
 
         //updates all players movements
-        for(key in players)
-            updatePlayer(players[key], key);
+        for(key in players){
+            player = players[key];
+            updatePlayer(player, key);
+
+            if(player.score > highScore)
+                highScore = player.score;
+        }
 
         //This makes enemies shoot, random enemy at random time
         if(getRandomInt(1, 7) === 5 && enemies.length)
@@ -128,7 +146,8 @@ module.exports = function(io){
             var packet = {
                 enemies: enemies,
                 eMissles: eMissles,
-                fMissles: fMissles
+                fMissles: fMissles.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
+                highScore: highScore
             };
 
             if(player){
@@ -141,7 +160,8 @@ module.exports = function(io){
 
                 packet.player = {
                     currentTop: player.currentTop,
-                    currentLeft: player.currentLeft
+                    currentLeft: player.currentLeft,
+                    score: player.score
                 }
             }else{
                 packet.players = Object.keys(players).map(function(key){
@@ -163,7 +183,6 @@ module.exports = function(io){
 };
 
 function removePlayer(id){
-    playerCnt--;
 
     var client = multiClients[id];
 
@@ -179,15 +198,23 @@ function removePlayer(id){
         console.log(err);
     }
 
+    try{
+        client.removeListener('good-bye', leaveMultiplayer[id]);
+    }catch(err){
+        console.log(err);
+    }
+
     client.removeListener('start-game', startGame);
 
     delete players[id];
+    playerCnt--;
 
     for(var key in players)
         delete players[key].players[id];
 
     delete shoot[id];
     delete updatePlayerMv[id];
+    delete leaveMultiplayer[id];
 }
 
 //Multiplier game
@@ -225,7 +252,8 @@ function createFMissle(player){
     if(player)
         fMissles.push({
             currentLeft: player.currentLeft,
-            currentTop: player.currentTop
+            currentTop: player.currentTop,
+            id: player.id
         });
 }
 
@@ -299,6 +327,11 @@ function updateFMissle(missle, index){
 
             if(( (enemy.currentLeft + window) > missle.currentLeft) && (enemy.currentLeft - window) < missle.currentLeft){
                 if(( (enemy.currentTop + window) > missle.currentTop) && (enemy.currentTop - window) < missle.currentTop){
+                    var player = players[missle.id];
+
+                    if(player)
+                        player.score += 5;
+
                     fMissles.splice(index, 1);
                     enemies.splice(j, 1);
                 }
@@ -334,6 +367,12 @@ function restartGame(){
         enemySpawnInterval = undefined;
     }
 
+    if(enemies.length || fMissles.length || eMissles.length){
+        setTimeout(restartGame, 0); //adds it to the bottom of the list so it is non-blocking, process.nextTick adds it to the top and is blocking. cool
+        console.log('still Waiting');
+        return;
+    }
+
     enemies = [];
     fMissles = [];
     eMissles = [];
@@ -353,8 +392,8 @@ function blankPlayersField(){
             fMissles: [],
             players: [],
             player: {
-                currentTop: 0,
-                currentLeft: 0
+                currentTop: -10,
+                currentLeft: -10
             }
         });
     }
