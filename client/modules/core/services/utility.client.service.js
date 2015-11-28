@@ -1,15 +1,12 @@
 'use strict';
 
-angular.module('core').factory('Utility', ['$q', '$http', 'MessageParserService', 'Alerts',
-    function ($q, $http, MessageParserService, Alerts) {
+angular.module('core').factory('Utility', ['$q', '$http', 'Alerts',
+    function ($q, $http, Alerts) {
         var service = {
                 get: {},
                 post: {},
                 delete: {},
                 put: {}
-            },
-            parseErrorMessage = function (error) {
-                return {message: MessageParserService.parseMessage(error)};
             };
 
         service.get = function (rt, params) {
@@ -25,7 +22,7 @@ angular.module('core').factory('Utility', ['$q', '$http', 'MessageParserService'
                     deferred.resolve(data);
                 })
                 .error(function (data, status) {
-                    var errMsg = 'POST ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + parseErrorMessage(data).message + '\'';
+                    var errMsg = 'POST ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + data + '\'';
                     Alerts.addAlert('danger', errMsg, data);
                     deferred.reject();
                 });
@@ -43,7 +40,7 @@ angular.module('core').factory('Utility', ['$q', '$http', 'MessageParserService'
                 })
                 .error(function (data, status) {
 
-                    var errMsg = 'POST ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + parseErrorMessage(data).message + '\'';
+                    var errMsg = 'POST ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + data + '\'';
                     Alerts.addAlert('danger', errMsg, data);
                     deferred.reject();
                 });
@@ -60,7 +57,7 @@ angular.module('core').factory('Utility', ['$q', '$http', 'MessageParserService'
                 })
                 .error(function (data, status) {
 
-                    var errMsg = 'PUT ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + parseErrorMessage(data).message + '\'';
+                    var errMsg = 'PUT ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + data + '\'';
                     Alerts.addAlert('danger', errMsg, data);
                     deferred.reject();
                 });
@@ -77,7 +74,7 @@ angular.module('core').factory('Utility', ['$q', '$http', 'MessageParserService'
                 })
                 .error(function (data, status) {
 
-                    var errMsg = 'DELETE ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + parseErrorMessage(data).message + '\'';
+                    var errMsg = 'DELETE ' + rt + ': Failed. Status=' + status + '  - Msg=\'' + data + '\'';
                     Alerts.addAlert('danger', errMsg, data);
                     deferred.reject();
                 });

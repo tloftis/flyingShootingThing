@@ -1,12 +1,7 @@
 'use strict';
 
-angular.module('core').factory('FileService', ['$q','$http','Upload','MessageParserService',
-    function ($q,$http,Upload,MessageParserService) {
-
-        var parseErrorMessage = function (error) {
-            return {message: MessageParserService.parseMessage(error)};
-        };
-
+angular.module('core').factory('FileService', ['$q','$http','Upload',
+    function ($q,$http,Upload) {
         var fileService = function () {
 
         };
@@ -104,7 +99,7 @@ angular.module('core').factory('FileService', ['$q','$http','Upload','MessagePar
 
             }).error(function (data, status, headers, config) {
                 _this.progress = 0;
-                deferred.reject(parseErrorMessage(data));
+                deferred.reject(data);
             });
 
             return deferred.promise;
@@ -130,7 +125,7 @@ angular.module('core').factory('FileService', ['$q','$http','Upload','MessagePar
                 .error(function (data, status, headers, config) {
                     // called asynchronously if an error occurs
                     // or server returns response with an error status.
-                    deferred.reject(parseErrorMessage(data));
+                    deferred.reject(data);
                 });
 
             return deferred.promise;

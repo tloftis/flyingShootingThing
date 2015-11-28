@@ -4,15 +4,15 @@
 /* globals moment: true */
 
 // Reports controller
-angular.module('chat').controller('chatController', ['$rootScope', '$scope', '$state', 'Alerts', '$location',
-    function ($rootScope, $scope, $state, Alerts, $location) {
+angular.module('chat').controller('chatController', ['socketService', '$scope', '$state', 'Alerts', '$location',
+    function (socketService, $scope, $state, Alerts, $location) {
         console.log('Chat Controller');
         $scope.comments = [];
 
         var commentField = angular.element(document.getElementsByName('comments'));
         var maxComments = 50;
 
-        $scope.socket = $rootScope.socket;
+        $scope.socket = socketService;
 
         window.chat = function(data){
             $scope.socket.emit('chat', data);

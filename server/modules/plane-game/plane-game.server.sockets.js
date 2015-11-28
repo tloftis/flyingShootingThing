@@ -13,7 +13,6 @@ var log = require('../../../config/logger'),
     clients = {},
     multiClients = {};
 
-
 var fMissles = [],
     eMissles = [],
     enemies = [],
@@ -88,9 +87,8 @@ module.exports = function(io){
             });
         }
 
-        if(clients[client.handshake.address] === undefined){
+        if(clients[client.handshake.address] === undefined)
             indivualClients(client); //I didn't want some if statement that just tabbed off the screen, so this worked well
-        }
     });
 
     //This dictates the update and movement rate of all things in game
@@ -168,16 +166,25 @@ function removePlayer(id){
     playerCnt--;
 
     var client = multiClients[id];
-    client.removeListener('control-movement', updatePlayerMv[id]);
-    client.removeListener('control-shoot', shoot[id]);
+
+    try{
+        client.removeListener('control-movement', updatePlayerMv[id]);
+    }catch(err){
+        console.log(err);
+    }
+
+    try{
+        client.removeListener('control-shoot', shoot[id]);
+    }catch(err){
+        console.log(err);
+    }
+
     client.removeListener('start-game', startGame);
 
     delete players[id];
 
-    for(var key in players){
-        var playerPlayers = players[key].players;
-        delete playerPlayers[id];
-    }
+    for(var key in players)
+        delete players[key].players[id];
 
     delete shoot[id];
     delete updatePlayerMv[id];
@@ -269,12 +276,11 @@ function updateEMissle(missle, index){
         for(var key in players){
             var player = players[key];
 
-            if(( (player.currentLeft + window) > missle.currentLeft) && (player.currentLeft - window) < missle.currentLeft){
+            if(( (player.currentLeft + window) > missle.currentLeft) && (player.currentLeft - window) < missle.currentLeft)
                 if(( (player.currentTop + window) > missle.currentTop) && (player.currentTop - window) < missle.currentTop){
                     multiClients[key].emit('you-dead', {});
                     removePlayer(key);
                 }
-            }
         }
     }
 }
