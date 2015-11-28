@@ -18,13 +18,13 @@ var fMissles = [],
     eMissles = [],
     enemies = [],
     players = {},
+    enemySpawnInterval,
+    updatePlayerMv = {},
+    shoot = {},
     gameRate = 25, //in Milliseconds
     playerMvVert = 5,
     playerMvHoz = 0.75,
-    playerCnt = 0,
-    enemySpawnInterval,
-    updatePlayerMv = {},
-    shoot = {};
+    playerCnt = 0;
 
 module.exports = function(io){
     //Initialization and disconnection
@@ -48,6 +48,10 @@ module.exports = function(io){
 
                 if(!multiClients[id]){
                     multiClients[id] = client;
+                    var oldPlayers = {};
+
+                    for(var key in players)
+                        oldPlayers[key] = players[key];
 
                     var player = {
                         currentTop: 50,
@@ -56,13 +60,11 @@ module.exports = function(io){
                         mvR: false,
                         mvU: false,
                         mvD: false,
-                        players: Object.keys(players).map(function(key){
-                            return players[key];
-                        })
+                        players: oldPlayers
                     };
 
                     for(var key in players)
-                        players[key].players.push(player);
+                        players[key].players[id] = player;
 
                     players[id] = player;
 
@@ -87,7 +89,7 @@ module.exports = function(io){
         }
 
         if(clients[client.handshake.address] === undefined){
-            indivualClients(client); //separate out the client from the scope by calling a function instead
+            indivualClients(client); //I didn't want some if statement that just tabbed off the screen, so this worked well
         }
     });
 
@@ -118,40 +120,67 @@ module.exports = function(io){
             updatePlayer(players[key], key);
 
         //This makes enemies shoot, random enemy at random time
-        if(getRandomArbitrary(1, 7) === 5 && enemies.length)
-            createEMissle(enemies[getRandomArbitrary(0, (enemies.length -1))]);
+        if(getRandomInt(1, 7) === 5 && enemies.length)
+            createEMissle(enemies[getRandomInt(0, (enemies.length -1))]);
 
         //Send all players an update of all positions of bullets, players and enemies
         for(key in multiClients){
             player = players[key];
-            if(player)
-                multiClients[key].emit('multiplier-update', {
-                    enemies: enemies,
-                    eMissles: eMissles,
-                    fMissles: fMissles,
-                    players: Object.keys(player.players).map(function(key){
-                        return {
-                            currentTop: player.players[key].currentTop,
-                            currentLeft: player.players[key].currentLeft
-                        };
-                    }),
-                    player: {
-                        currentTop: player.currentTop,
-                        currentLeft: player.currentLeft
-                    }
+
+            var packet = {
+                enemies: enemies,
+                eMissles: eMissles,
+                fMissles: fMissles
+            };
+
+            if(player){
+                packet.players = Object.keys(player.players).map(function(key){
+                    return {
+                        currentTop: player.players[key].currentTop,
+                        currentLeft: player.players[key].currentLeft
+                    };
                 });
+
+                packet.player = {
+                    currentTop: player.currentTop,
+                    currentLeft: player.currentLeft
+                }
+            }else{
+                packet.players = Object.keys(players).map(function(key){
+                    return {
+                        currentTop: players[key].currentTop,
+                        currentLeft: players[key].currentLeft
+                    };
+                });
+
+                packet.player = {
+                    currentTop: -10,
+                    currentLeft: -10
+                }
+            }
+
+            multiClients[key].emit('multiplier-update', packet);
         }
     }, gameRate);
 };
 
 function removePlayer(id){
     playerCnt--;
-    delete players[id]; //if player exist, remove it
 
     var client = multiClients[id];
     client.removeListener('control-movement', updatePlayerMv[id]);
     client.removeListener('control-shoot', shoot[id]);
     client.removeListener('start-game', startGame);
+
+    delete players[id];
+
+    for(var key in players){
+        var playerPlayers = players[key].players;
+        delete playerPlayers[id];
+    }
+
+    delete shoot[id];
+    delete updatePlayerMv[id];
 }
 
 //Multiplier game
@@ -161,19 +190,20 @@ function startGame(){
         console.log('Starting Game');
 
         enemySpawnInterval = setInterval(function(){
-            if((enemies.length <= 10) && ( getRandomArbitrary(1, 6) === 5))
+            if((enemies.length <= 10) && (getRandomInt(1, 6) === 5))
                 createEnemy();
         }, 100);
     }
 }
 
+//Game Element creation functions
 function createEnemy(){
     enemies.push({
-        currentTop: getRandomArbitrary(0, 100),
+        currentTop: getRandomInt(0, 100),
         currentLeft: 100,
         topDif: 0,
         dead: false
-    })
+    });
 }
 
 function createEMissle(enemy){
@@ -192,21 +222,28 @@ function createFMissle(player){
         });
 }
 
-function getRandomArbitrary(min, max) {
+//Randomizing functions for enemy movements and spawn rates
+function getRandomInt(min, max) {
     if(min >= max) return min;
     return Math.floor(Math.random() * (++max - min) + min);
 }
 
-function updateEnemy(enemy, index){
-    enemy.currentLeft -= 1;
+function getRandomFloat(min, max) {
+    if(min >= max) return min;
+    return Math.random() * (++max - min) + min;
+}
 
-    var ran = getRandomArbitrary(0, 15);
+//Game element Update Functions
+function updateEnemy(enemy, index){
+    enemy.currentLeft -= 0.75;
+
+    var ran = getRandomInt(0, 15);
 
     if(ran === 3 || enemy.currentTop === 100)
-        enemy.topDif -= getRandomArbitrary(1, 2);
+        enemy.topDif -= getRandomFloat(0, 1);
 
     if(ran === 2 || enemy.currentTop === 0)
-        enemy.topDif += getRandomArbitrary(1, 2);
+        enemy.topDif += getRandomFloat(0, 1);
 
     //Shift up, down or not at all
     enemy.currentTop += enemy.topDif;
@@ -222,7 +259,7 @@ function updateEnemy(enemy, index){
 }
 
 function updateEMissle(missle, index){
-    missle.currentLeft -= 2;
+    missle.currentLeft -= 1.5;
 
     if(missle.currentLeft < 0){
         eMissles.splice(index, 1);
@@ -243,7 +280,7 @@ function updateEMissle(missle, index){
 }
 
 function updateFMissle(missle, index){
-    missle.currentLeft += 2;
+    missle.currentLeft += 1.5;
 
     if(missle.currentLeft > 100){
         fMissles.splice(index, 1);
@@ -286,7 +323,7 @@ function updatePlayer(player){
 }
 
 function restartGame(){
-    if(enemySpawnInterval){
+    if(enemySpawnInterval){ //This should already exist but since this isn't checked at any rate just check again to make sure
         clearInterval(enemySpawnInterval);
         enemySpawnInterval = undefined;
     }
@@ -301,7 +338,6 @@ function restartGame(){
 }
 
 function blankPlayersField(){
-    //Send all players an update of all positions of bullets, players and enemies
     for(var key in multiClients) {
         console.log('Blanked ' + key + '\'s field');
 

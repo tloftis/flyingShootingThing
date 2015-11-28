@@ -19,7 +19,7 @@ angular.module('plane-game').config(['$stateProvider',
                     'header@plane-game': {
                         controller: function($scope) {
                             $scope.head = 'Plane Game Single Player';
-                            $scope.subHead = 'Press Enter to Start, Arrows to move, space to shoot';
+                            $scope.subHead = 'Press Enter to Start, Arrows/WASD to move, Space/Mouse to shoot\n Your Green';
                         }
                     }
                 }

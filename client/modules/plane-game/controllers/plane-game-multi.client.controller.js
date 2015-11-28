@@ -16,7 +16,6 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
         $scope.socket = $rootScope.socket;
 
         var field = angular.element(document.getElementsByName('planeparent'));
-        var playerBaseClass = 'fa fa-plane fa-rotate-45 ';
 
         //Allow chat though the console
         window.chat = function(data){
@@ -34,8 +33,6 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
 
         $scope.socket.on('you-dead', function(data) {
             console.log('You\'ve been un-alived');
-            updatePos($scope.player, {currentTop: -10, currentLeft: -10});
-            //$scope.player.parentNode.removeChild($scope.player);
         });
 
         $scope.socket.on('multiplier-update', function(data) {
@@ -106,9 +103,11 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
         }
 
         function removePlayer(player, index){
+            console.log('Removing Player');
             if(player.parentNode){
                 player.parentNode.removeChild(player);
                 $scope.players.splice(index, 1);
+                console.log('Removed');
             }
         }
 
@@ -163,7 +162,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['$rootScope
         var createPlayer = function(){
             var player = document.createElement("i");
 
-            player.className = playerBaseClass;
+            player.className = 'fa fa-plane fa-rotate-45';
             player.style.position = 'absolute';
             player.style.left = '-10%';
             player.style.top = '-10%';
