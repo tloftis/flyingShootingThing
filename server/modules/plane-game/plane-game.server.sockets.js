@@ -143,9 +143,10 @@ module.exports = function(io){
         for(key in multiClients){
             player = players[key];
 
+            //strip all data except position from enemies, and missles
             var packet = {
-                enemies: enemies,
-                eMissles: eMissles,
+                enemies: enemies.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
+                eMissles: eMissles.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
                 fMissles: fMissles.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
                 highScore: highScore
             };
@@ -236,7 +237,9 @@ function createEnemy(){
         currentTop: getRandomInt(0, 100),
         currentLeft: 100,
         topDif: 0,
-        dead: false
+        dead: false,
+        length: 2,
+        width: 2
     });
 }
 
@@ -244,7 +247,9 @@ function createEMissle(enemy){
     if(enemy)
         eMissles.push({
             currentLeft: enemy.currentLeft,
-            currentTop: enemy.currentTop
+            currentTop: enemy.currentTop,
+            length: 2,
+            width: 1
         });
 }
 
@@ -253,6 +258,8 @@ function createFMissle(player){
         fMissles.push({
             currentLeft: player.currentLeft,
             currentTop: player.currentTop,
+            length: 2,
+            width: 1,
             id: player.id
         });
 }
@@ -299,13 +306,13 @@ function updateEMissle(missle, index){
     if(missle.currentLeft < 0){
         eMissles.splice(index, 1);
     }else{
-        var window = 2;
+        var player = {};
 
         for(var key in players){
-            var player = players[key];
+            player = players[key];
 
-            if(( (player.currentLeft + window) > missle.currentLeft) && (player.currentLeft - window) < missle.currentLeft)
-                if(( (player.currentTop + window) > missle.currentTop) && (player.currentTop - window) < missle.currentTop){
+            if(( (player.currentLeft + missle.length/2) > missle.currentLeft) && (player.currentLeft - missle.length/2) < missle.currentLeft)
+                if(( (player.currentTop + missle.width/2) > missle.currentTop) && (player.currentTop - missle.width/2) < missle.currentTop){
                     multiClients[key].emit('you-dead', {});
                     removePlayer(key);
                 }
@@ -319,14 +326,13 @@ function updateFMissle(missle, index){
     if(missle.currentLeft > 100){
         fMissles.splice(index, 1);
     }else{
-        var window = 2,
-            enemy = {};
+        var enemy = {};
 
         for(var j =0; j< enemies.length; j++){
             enemy = enemies[j];
 
-            if(( (enemy.currentLeft + window) > missle.currentLeft) && (enemy.currentLeft - window) < missle.currentLeft){
-                if(( (enemy.currentTop + window) > missle.currentTop) && (enemy.currentTop - window) < missle.currentTop){
+            if(( (enemy.currentLeft + missle.length/2) > missle.currentLeft) && (enemy.currentLeft - missle.length/2) < missle.currentLeft){
+                if(( (enemy.currentTop + missle.width/2) > missle.currentTop) && (enemy.currentTop - missle.width/2) < missle.currentTop){
                     var player = players[missle.id];
 
                     if(player)
@@ -384,8 +390,6 @@ function restartGame(){
 
 function blankPlayersField(){
     for(var key in multiClients) {
-        console.log('Blanked ' + key + '\'s field');
-
         multiClients[key].emit('multiplier-update', {
             enemies: [],
             eMissles: [],
@@ -393,7 +397,8 @@ function blankPlayersField(){
             players: [],
             player: {
                 currentTop: -10,
-                currentLeft: -10
+                currentLeft: -10,
+                score: 0
             }
         });
     }

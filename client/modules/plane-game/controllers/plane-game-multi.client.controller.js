@@ -117,6 +117,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
         function playerDeath(data){
             console.log('You dead');
+            Alerts.addAlert('danger', 'You Dead');
         }
 
         //Element removal functions
