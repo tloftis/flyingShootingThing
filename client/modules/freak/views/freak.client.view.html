@@ -1,0 +1,6 @@
+<section class="prepend-top-10" ng-init="init()">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+        <button class="btn btn-info" ng-click="update();">Start</button>
+        <a ng-repeat="podcast in podcasts" class="btn btn-info" style="margin-right: 2%;" href="{{ podcast }}">{{ podcast }}</a>
+    </div>
+</section>
