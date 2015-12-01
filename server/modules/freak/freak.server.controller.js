@@ -69,22 +69,29 @@ exports.updateCasts = function(req, res) {
 
     while(itter <= 0){
         itter++;
-        var winHeader = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36';
-        var linuxHeader = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.73 Safari/537.36';
+        var winHeader = {
+            'Accept': '*/*',
+            'Referer': 'http://wrif.com/shows/dave-and-chuck/podcasts/',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36',
+            'Accept-Encoding': 'gzip, deflate, sdch',
+            'Accept-Language': 'en-US,en;q=0.8',
+            'Cookie': '__cfduid=deea2f41b545d983e41ac4e4d6f704a871443559212; em_cdn_uid=t%3D1443559213364%26u%3D4a2cb03ec21b435f973608dec2f0a0f5; X-Mapping-fjhppofk=29F52832132A49E616E54D2302F2CCAC; OX_sd=1; _gat=1; _ga=GA1.2.945204455.1443559214; _gat_tdapiTracker=1; OX_plg=swf|shk|pm'
+        };
+        var linuxHeader = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Referer': 'http://wrif.com/shows/dave-and-chuck/podcasts/',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.73 Safari/537.36',
+            'Accept-Encoding': 'gzip, deflate, sdch',
+            'Accept-Language': 'en-US,en;q=0.8',
+            'Cookie': '__cfduid=daca895f34a3d58ae00b7b4ed513a66ef1449006104; em_cdn_uid=t%3D1449006108630%26u%3Db56efda16b4e4c1abd5fb96c6fd09151; _cb_ls=1; OX_sd=4; _chartbeat2=C3-7OoCqvWdcCKf198.1449006113182.1449006197958.1; _ga=GA1.2.120867586.1449006109; _chartbeat4=t=DdX_b9vX6ePvuU0wBX0VvFDmIYyi&E=12&EE=12&x=15897&c=3.42&y=32789&w=150; X-Mapping-fjhppofk=EED1D31EFB93E26C9328CD33B39BCF23'
+        };
         var header = process.platform === 'win32' ? winHeader :linuxHeader;
 
         ops.push({
             url: 'http://wrif.com/shows/dave-and-chuck/podcasts/page/' + itter + '/?ajax=1&partial_slug=partials%2Floop-gmr_podcast&partial_name=',
             "rejectUnauthorized": false,
-            headers: {
-                'Accept': '*/*',
-                'Referer': 'http://wrif.com/shows/dave-and-chuck/podcasts/',
-                'X-Requested-With': 'XMLHttpRequest',
-                'User-Agent': header,
-                'Accept-Encoding': 'gzip, deflate, sdch',
-                'Accept-Language': 'en-US,en;q=0.8',
-                'Cookie': '__cfduid=deea2f41b545d983e41ac4e4d6f704a871443559212; em_cdn_uid=t%3D1443559213364%26u%3D4a2cb03ec21b435f973608dec2f0a0f5; X-Mapping-fjhppofk=29F52832132A49E616E54D2302F2CCAC; OX_sd=1; _gat=1; _ga=GA1.2.945204455.1443559214; _gat_tdapiTracker=1; OX_plg=swf|shk|pm'
-            }
+            headers: header
         });
     }
 
