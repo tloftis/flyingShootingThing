@@ -88,6 +88,7 @@ exports.updateCasts = function(req, res) {
     async.each(ops, function (op, next) {
             request.get(op, function (error, response, body) {
                 if (!error && response.statusCode == 200 && body) {
+                    console.log(body);
                     body = JSON.parse(body);
                     var descriptsM = body.html.match(descriptWMp3Rg);
 
