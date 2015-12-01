@@ -9,3 +9,4 @@ client/lib
 client/dist
 client/media/podcasts/*
 .env
+./*.mp3

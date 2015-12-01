@@ -8,6 +8,7 @@ var log = require('../../../config/logger'),
     request = require('request'),
     path = require('path'),
     fs = require('fs'),
+    mv = require('mv'),
     _ = require('lodash'),
     async = require('async'),
     ffmetadata = require("ffmetadata"),
@@ -86,7 +87,7 @@ exports.updateCasts = function(req, res) {
 
     async.each(ops, function (op, next) {
             request.get(op, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
+                if (!error && response.statusCode == 200 && body) {
                     body = JSON.parse(body);
                     var descriptsM = body.html.match(descriptWMp3Rg);
 
@@ -137,7 +138,10 @@ exports.updateCasts = function(req, res) {
                         if(index === podcasts.length){
                             console.log('Podcasts Ready');
 
-                            downloading = false;
+                            mv('source', 'dest', function(err) {
+                                downloading = false;
+                            });
+
                         }else
                             metaData(podcasts[index], function(err){
                                 if (err)
@@ -154,7 +158,7 @@ exports.updateCasts = function(req, res) {
         });
 
     function download(podcast, callback){
-        var mp3Loc = podcastPath + '/' + podcast.mp3Name + '.mp3';
+        var mp3Loc = podcast.mp3Name + '.mp3';
         callback = callback || function(){};
 
         downloader(podcast.link, mp3Loc, callback);
@@ -174,7 +178,7 @@ exports.updateCasts = function(req, res) {
 
     function metaData(podcast, callback){
         callback = callback || function(){};
-        var mp3Loc = podcastPath + '/' + podcast.mp3Name + '.mp3';
+        var mp3Loc = podcast.mp3Name + '.mp3';
 
         var options = {
             attachments: ['client/modules/core/img/brand/Podcast-Image1.jpg'],
@@ -191,6 +195,8 @@ exports.updateCasts = function(req, res) {
             date:  dateYear
         };
 
-        ffmetadata.write(mp3Loc, data, options, callback);
+        ffmetadata.write(mp3Loc, data, options, function(){
+            mv(mp3Loc, podcastPath + '/' + mp3Loc, {mkdirp: true}, callback);
+        });
     }
 };
