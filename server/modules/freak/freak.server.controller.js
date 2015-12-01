@@ -69,6 +69,9 @@ exports.updateCasts = function(req, res) {
 
     while(itter <= 0){
         itter++;
+        var winHeader = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36';
+        var linuxHeader = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.73 Safari/537.36';
+        var header = process.platform === 'win32' ? winHeader :linuxHeader;
 
         ops.push({
             url: 'http://wrif.com/shows/dave-and-chuck/podcasts/page/' + itter + '/?ajax=1&partial_slug=partials%2Floop-gmr_podcast&partial_name=',
@@ -77,7 +80,7 @@ exports.updateCasts = function(req, res) {
                 'Accept': '*/*',
                 'Referer': 'http://wrif.com/shows/dave-and-chuck/podcasts/',
                 'X-Requested-With': 'XMLHttpRequest',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36',
+                'User-Agent': header,
                 'Accept-Encoding': 'gzip, deflate, sdch',
                 'Accept-Language': 'en-US,en;q=0.8',
                 'Cookie': '__cfduid=deea2f41b545d983e41ac4e4d6f704a871443559212; em_cdn_uid=t%3D1443559213364%26u%3D4a2cb03ec21b435f973608dec2f0a0f5; X-Mapping-fjhppofk=29F52832132A49E616E54D2302F2CCAC; OX_sd=1; _gat=1; _ga=GA1.2.945204455.1443559214; _gat_tdapiTracker=1; OX_plg=swf|shk|pm'
@@ -88,7 +91,6 @@ exports.updateCasts = function(req, res) {
     async.each(ops, function (op, next) {
             request.get(op, function (error, response, body) {
                 if (!error && response.statusCode == 200 && body) {
-                    console.log(body);
                     body = JSON.parse(body);
                     var descriptsM = body.html.match(descriptWMp3Rg);
 
