@@ -1,6 +1,19 @@
-<section class="prepend-top-10" ng-init="init()">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
-        <button class="btn btn-info" ng-click="update();">Start</button>
-        <a ng-repeat="podcast in podcasts" class="btn btn-info" style="margin-right: 2%;" href="{{ podcast }}">{{ podcast }}</a>
+<section class="container-fluid plane-game">
+
+    <div class="prepend-top-10">
+        <div class="page-header" ui-view="header">
+            <h1>
+                {{head}}
+            </h1>
+            <h3>
+                {{subHead}}
+            </h3>
+        </div>
+
+        <div  ui-view="freak-canvas">
+        </div>
+
+        <div  ui-view="chat-canvas">
+        </div>
     </div>
 </section>

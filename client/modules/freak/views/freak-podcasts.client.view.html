@@ -1,0 +1,9 @@
+<section class="prepend-top-10" ng-init="init()">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+        <button class="btn btn-warning pull-left" ng-click="update();">Update</button>
+
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center" ng-repeat="podcast in podcasts">
+            <a  class="btn btn-info prepend-top-10" href="{{ podcast }}" style="margin-top: 10px;">{{ podcast.split('/').pop().split('.').shift() || podcast }}</a>
+        </div>
+    </div>
+</section>

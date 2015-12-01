@@ -7,6 +7,7 @@ angular.module('plane-game').config(['$stateProvider',
         $stateProvider.state('plane-game', {
                 url: '/plane-game',
                 templateUrl: 'modules/plane-game/views/plane-game.client.view.html',
+                abstract: true,
                 controller: 'planeGameController'
             }).
             state('plane-game.single', {

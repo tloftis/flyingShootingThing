@@ -10,7 +10,9 @@ var log = require('../../../config/logger'),
     fs = require('fs'),
     _ = require('lodash'),
     async = require('async'),
-    ffmetadata = require("ffmetadata");
+    ffmetadata = require("ffmetadata"),
+    podcastPath = 'client/media/podcasts',
+    downloading = false;
 
 var _getAllFilesFromFolder = function(dir) {
 
@@ -30,14 +32,31 @@ var _getAllFilesFromFolder = function(dir) {
 };
 
 exports.listCasts = function(req, res){
-    console.log('find podcasts');
-    var casts = _getAllFilesFromFolder('client/media');
+    var casts = _getAllFilesFromFolder(podcastPath);
     console.log(casts);
 
-    return res.jsonp();
+    casts = casts.map(function(cast){
+        cast = cast.split('/');
+        cast.shift();
+        return cast.join('/');
+    });
+
+    console.log(casts);
+
+    return res.jsonp(casts);
 };
 
 exports.updateCasts = function(req, res) {
+    if(downloading){
+        return res.status(400).send({
+            message: 'Already updating'
+        });
+    }else{
+        res.jsonp('Starting download, this will take a moment');
+    }
+
+    downloading = true;
+
     var podcasts = [];
     var itter = 0;
     var ops = [];
@@ -117,8 +136,8 @@ exports.updateCasts = function(req, res) {
                     function oneAtATime(index){
                         if(index === podcasts.length){
                             console.log('Podcasts Ready');
-                            res.jsonp(podcasts);
-                            return;
+
+                            downloading = false;
                         }else
                             metaData(podcasts[index], function(err){
                                 if (err)
@@ -135,7 +154,7 @@ exports.updateCasts = function(req, res) {
         });
 
     function download(podcast, callback){
-        var mp3Loc = 'client/media/' + podcast.mp3Name + '.mp3';
+        var mp3Loc = podcastPath + '/' + podcast.mp3Name + '.mp3';
         callback = callback || function(){};
 
         downloader(podcast.link, mp3Loc, callback);
@@ -146,12 +165,16 @@ exports.updateCasts = function(req, res) {
             .pipe(fs.createWriteStream(path))
             .on('close', function(err) {
                 callback(err);
+            })
+            .on('error', function(err){
+                console.log('error downloading');
+                callback();
             });
     }
 
     function metaData(podcast, callback){
         callback = callback || function(){};
-        var mp3Loc = 'client/media/' + podcast.mp3Name + '.mp3';
+        var mp3Loc = podcastPath + '/' + podcast.mp3Name + '.mp3';
 
         var options = {
             attachments: ['client/modules/core/img/brand/Podcast-Image1.jpg'],

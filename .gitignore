@@ -7,5 +7,5 @@ node_modules/
 client/lib
 .idea/
 client/dist
-client/media/*
+client/media/podcasts/*
 .env
