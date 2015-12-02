@@ -28,13 +28,13 @@ var fMissles = [],
 
 var missleConfig= [{
     name: 'Lightning Bolt',
-    width: 1,
+    width: 1.5,
     length: 2,
     speed: 2.5,
     class: 'fa fa-bolt text-warning fa-rotate-90'
 },{
     name: 'Normal Multi-fire',
-    width: 2,
+    width: 1,
     length: 2,
     speed: 2,
     class: 'fa fa-ellipsis-h text-danger'
@@ -223,7 +223,6 @@ module.exports = function(io){
 };
 
 function removePlayer(id){
-
     var client = multiClients[id];
 
     try{
@@ -272,12 +271,15 @@ function startGame(){
 
 //Game Element creation functions
 function createEnemy(){
+    var bulletType = (getRandomInt(1, 10) === 10) ? 0 : 1;
+
     enemies.push({
         currentTop: getRandomInt(0, 100),
         currentLeft: 100,
         topDif: 0,
         dead: false,
-        ammoType: missleConfig[(getRandomInt(1, 10) === 10) ? 0 : 1], //One in 10 it will be lightning
+        ammoType: missleConfig[bulletType], //One in 10 it will be lightning
+        pointVal: (bulletType) ? 5 : 10,
         length: 2,
         width: 2
     });
@@ -378,7 +380,7 @@ function updateFMissle(missle, index){
                     var player = players[missle.id];
 
                     if(player)
-                        player.score += 5;
+                        player.score += enemy.pointVal;
 
                     fMissles.splice(index, 1);
                     enemies.splice(j, 1);
