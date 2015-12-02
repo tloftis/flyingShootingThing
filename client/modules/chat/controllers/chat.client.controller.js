@@ -18,6 +18,13 @@ angular.module('chat').controller('chatController', ['socketService', '$scope', 
             $scope.socket.emit('chat', data);
         };
 
+        $scope.chatPress = function($event){
+            if($event.keyCode === 13 && $scope.newMessage){
+                $scope.socket.emit('chat', $scope.newMessage);
+                $scope.newMessage = '';
+            }
+        };
+
         window.chatSetName = function(data){
             $scope.socket.emit('chat-setname', data);
         };

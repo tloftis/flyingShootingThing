@@ -1,18 +1,20 @@
 <section class="prepend-top-10">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 pull-left" style="margin-top: 1%;">
-        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1 col-xs-1">
-            <label for="usr">Comment:</label>
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12" style="margin-top: 1%;">
+        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-12 col-xs-12" style="margin-top: 10px;">
+            <label for="usr" style="margin-right: 20px;">Comment:</label>
         </div>
-        <div class="col-xl-7 col-lg-7 col-md-7 col-sm-11 col-xs-11">
-            <input type="text" class="form-control" id="usr" data-ng-model="newMessage">
-        </div>
-        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 col-xs-12">
-            <button class="btn btn-warning"  ng-click="socket.emit('chat', newMessage);">Send Message</button>
+        <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12 col-xs-12">
+            <div class="col-xl-8 col-lg-8 col-md-8 col-sm-10 col-xs-10" style="margin-top: 10px;">
+                <input type="text" class="form-control pull-left" id="usr" data-ng-model="newMessage" ng-keypress="chatPress($event);">
+            </div>
+            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-2 col-xs-2" style="margin-top: 10px;">
+                <button class="btn btn-warning"  ng-click="socket.emit('chat', newMessage); newMessage = ''" >Send Message</button>
+            </div>
         </div>
     </div>
 
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <pre style="height:30vh; margin-top: 1%; background-color: #1b6d85" name="comments">
+        <pre style="height:30vh; margin-top: 1%; background-color: #1b6d85; border: silver" name="comments">
         </pre>
     </div>
 </section>

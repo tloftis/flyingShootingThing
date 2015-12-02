@@ -1,15 +1,23 @@
 <section class="prepend-top-10" ng-init="init()">
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
         <button class="btn btn-info" ng-click="socket.emit('join-multiplier', {});" style="margin-right: 2%;">Join</button>
         <button class="btn btn-warning"  ng-click="socket.emit('start-game', {});">Start</button>
 
-        <div class="pull-right">
-            <label>High Score:</label>
-            <pre class="prepend-top-10" style="width: 100px">{{ highScore }}</pre>
-        </div>
-        <div class="pull-right" style="margin-right: 2%;">
-            <label>Your Score:</label>
-            <pre class="prepend-top-10" style="width: 100px" ng-class="{ 'bg-success': playerData.score === highScore}">{{ playerData.score }}</pre>
+        <div class="col-sm-12 col-xs-12 bg-center" style="margin-top: 10px;">
+            <div class="pull-left">
+                <label  style="margin-right: 1%;">Refresh Rate:</label>
+                <pre class="prepend-top-10" style="width: 100px">{{ average.toFixed(2) }}</pre>
+            </div>
+            <div class="pull-right" style="margin-right: 2%;">
+                <label>High Score:</label>
+                <pre class="prepend-top-10" style="width: 100px">{{ highScore }}</pre>
+            </div>
+            <div class="pull-right" style="margin-right: 2%;">
+                <label>Your Score:</label>
+                <pre class="prepend-top-10" style="width: 100px" ng-class="{ 'bg-success': playerData.score === highScore}">{{ playerData.score }}</pre>
+            </div>
         </div>
     </div>
 
@@ -18,10 +26,55 @@
         </div>
     </div>
 
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12">
-        <div class="pull-left">
-            <label  style="margin-right: 1%;">Refresh Rate {ms):</label>
-            <pre class="prepend-top-10" style="width: 140px">{{ average.toFixed(2) }}</pre>
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center" ng-show="mobilecheck()">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = true; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = true; socket.emit('control-movement', playerMv);"
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);">
+                <i class="fa fa-arrow-up fa-rotate-315"></i>
+            </button>
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = true; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);"">
+                <i class="fa fa-arrow-up"></i>
+            </button>
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = true; playerMv.mvD = false; playerMv.mvL = true; playerMv.mvR = false; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);">
+                <i class="fa fa-arrow-up fa-rotate-45"></i>
+            </button>
+        </div>
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = true; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);"">
+                <i class="fa fa-arrow-left"></i>
+            </button>
+            <button class="btn btn-primary"  ng-click="socket.emit('control-shoot', {})">
+                <i class="fa fa-bullseye"></i>
+            </button>
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = true; playerMv.mvR = false; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);"">
+                <i class="fa fa-arrow-right"></i>
+            </button>
+        </div>
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = false; playerMv.mvD = true; playerMv.mvL = false; playerMv.mvR = true; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);"">
+                <i class="fa fa-arrow-down fa-rotate-45"></i>
+            </button>
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = false; playerMv.mvD = true; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);"">
+                <i class="fa fa-arrow-down"></i>
+            </button>
+            <button class="btn btn-primary"
+                    ng-mousedown="playerMv.mvU = false; playerMv.mvD = true; playerMv.mvL = true; playerMv.mvR = false; socket.emit('control-movement', playerMv);""
+                    ng-mouseup="playerMv.mvU = false; playerMv.mvD = false; playerMv.mvL = false; playerMv.mvR = false; socket.emit('control-movement', playerMv);"">
+                <i class="fa fa-arrow-down fa-rotate-315"></i>
+            </button>
         </div>
     </div>
 </section>
