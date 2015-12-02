@@ -26,10 +26,24 @@ var fMissles = [],
     playerMvHoz = 0.75,
     playerCnt = 0;
 
+var missleConfig= [{
+    name: 'Lightning Bolt',
+    width: 1,
+    length: 2,
+    speed: 2.5,
+    class: 'fa fa-bolt text-warning fa-rotate-90'
+},{
+    name: 'Normal Multi-fire',
+    width: 2,
+    length: 2,
+    speed: 2,
+    class: 'fa fa-ellipsis-h text-danger'
+}];
+
 module.exports = function(io){
     //Initialization and disconnection
     io.on('connection', function (client) {
-        function indivualClients(client){
+        function individualClients(client){
             clients[client.handshake.address] = client;
 
             client.on('disconnect', function () {
@@ -50,9 +64,11 @@ module.exports = function(io){
 
                     var oldPlayers = {};
 
+                    //create a new object with the same keys as players and same object refrences
                     for(var key in players)
                         oldPlayers[key] = players[key];
 
+                    //setup player with default values
                     var player = {
                         currentTop: 50,
                         currentLeft: 10,
@@ -60,14 +76,17 @@ module.exports = function(io){
                         mvR: false,
                         mvU: false,
                         mvD: false,
+                        shoot: false,
                         score: 0,
                         players: oldPlayers,
                         id: id
                     };
 
+                    //Add new player to list of already existing players lsit
                     for(var key in players)
                         players[key].players[id] = player;
 
+                    //Add player to list of players
                     playerCnt++;
                     players[id] = player;
 
@@ -79,17 +98,18 @@ module.exports = function(io){
                         player.mvD = data.mvD || false;
                     };
 
-                    //Multiplier game
+                    //Set the player to shoot next update
                     shoot[id] = function() {
-                        createFMissle(player);
+                        player.shoot = true;
                     };
 
-                    //Multiplier game
+                    //Remove the player, all listeners attach the them, and finally their client object
                     leaveMultiplayer[id] = function() {
                         removePlayer(id);
                         delete multiClients[id];
                     };
 
+                    //Create listeners for player movements, actions and if they leave
                     client.on('control-movement', updatePlayerMv[id]);
                     client.on('control-shoot', shoot[id]);
                     client.on('good-bye', leaveMultiplayer[id]);
@@ -99,7 +119,7 @@ module.exports = function(io){
         }
 
         if(clients[client.handshake.address] === undefined)
-            indivualClients(client); //I didn't want some if statement that just tabbed off the screen, so this worked well
+            individualClients(client); //I like the way this looked, so I went for it
     });
 
     var highScore = 0;
@@ -112,7 +132,8 @@ module.exports = function(io){
 
         var i = 0,
             key,
-            player;
+            player,
+            enemy;
 
         //updates the movements of all enemies
         for(i = 0; i < enemies.length; i++)
@@ -137,7 +158,9 @@ module.exports = function(io){
 
         //This makes enemies shoot, random enemy at random time
         if(getRandomInt(1, 7) === 5 && enemies.length)
-            createEMissle(enemies[getRandomInt(0, (enemies.length -1))]);
+            enemy = enemies[getRandomInt(0, (enemies.length -1))];
+            if(enemy)
+                createEMissle(enemy, enemy.ammoType);
 
         //Send all players an update of all positions of bullets, players and enemies
         for(key in multiClients){
@@ -145,9 +168,25 @@ module.exports = function(io){
 
             //strip all data except position from enemies, and missles
             var packet = {
-                enemies: enemies.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
-                eMissles: eMissles.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
-                fMissles: fMissles.map(function(data){ return {currentLeft: data.currentLeft, currentTop: data.currentTop}}),
+                enemies: enemies.map(function(data){
+                    return {
+                        currentLeft: data.currentLeft,
+                        currentTop: data.currentTop
+                    }
+                }),
+                eMissles: eMissles.map(function(data){
+                    return {
+                        currentLeft: data.currentLeft,
+                        currentTop: data.currentTop,
+                        template: data.template || null
+                    }
+                }),
+                fMissles: fMissles.map(function(data){
+                    return {
+                        currentLeft: data.currentLeft,
+                        currentTop: data.currentTop
+                    }
+                }),
                 highScore: highScore
             };
 
@@ -238,18 +277,21 @@ function createEnemy(){
         currentLeft: 100,
         topDif: 0,
         dead: false,
+        ammoType: missleConfig[(getRandomInt(1, 10) === 10) ? 0 : 1], //One in 10 it will be lightning
         length: 2,
         width: 2
     });
 }
 
-function createEMissle(enemy){
+function createEMissle(enemy, template){
     if(enemy)
         eMissles.push({
             currentLeft: enemy.currentLeft,
             currentTop: enemy.currentTop,
-            length: 2,
-            width: 1
+            length: template.length || 2,
+            width: template.width || 1,
+            speed: template.speed || 1.5,
+            template: template.class || 'fa fa-ellipsis-h text-danger'
         });
 }
 
@@ -301,7 +343,7 @@ function updateEnemy(enemy, index){
 }
 
 function updateEMissle(missle, index){
-    missle.currentLeft -= 1.5;
+    missle.currentLeft -= missle.speed;
 
     if(missle.currentLeft < 0){
         eMissles.splice(index, 1);
@@ -365,6 +407,10 @@ function updatePlayer(player){
         if(player.currentLeft > 0)
             player.currentLeft -= playerMvHoz;
     }
+    if(player.shoot){
+        createFMissle(player);
+        player.shoot = false;
+    }
 }
 
 function restartGame(){
@@ -375,7 +421,6 @@ function restartGame(){
 
     if(enemies.length || fMissles.length || eMissles.length){
         setTimeout(restartGame, 0); //adds it to the bottom of the list so it is non-blocking, process.nextTick adds it to the top and is blocking. cool
-        console.log('still Waiting');
         return;
     }
 

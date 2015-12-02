@@ -88,19 +88,19 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             //update movements
             var i = 0;
             for(i = 0; i < data.eMissles.length; i++)
-                updatePos($scope.eMissles[i], data.eMissles[i]);
+                updateElm($scope.eMissles[i], data.eMissles[i]);
 
             for(i = 0; i < data.fMissles.length; i++)
-                updatePos($scope.fMissles[i], data.fMissles[i]);
+                updateElm($scope.fMissles[i], data.fMissles[i]);
 
             for(i = 0; i < data.enemies.length; i++)
-                updatePos($scope.enemies[i], data.enemies[i]);
+                updateElm($scope.enemies[i], data.enemies[i]);
 
             for(i = 0; i < data.players.length; i++)
-                updatePos($scope.players[i], data.players[i]);
+                updateElm($scope.players[i], data.players[i]);
 
             if($scope.player)
-                updatePos($scope.player, data.player);
+                updateElm($scope.player, data.player);
 
             time = 0;
             for(i = 0; i < averages.length; i++){
@@ -152,10 +152,13 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         }
 
         //Element Position movement functions
-        function updatePos(element, data){
+        function updateElm(element, data){
             if(element.style){
                 element.style.left = data.currentLeft + '%';
                 element.style.top = data.currentTop + '%';
+
+                if(data.template)
+                    element.className = data.template;
             }
         }
 
@@ -176,7 +179,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         var createEBody = function(){
             var missle = document.createElement("i");
 
-            missle.className = 'fa fa-ellipsis-h text-danger';
+            missle.className = '';
             missle.style.position = 'absolute';
             missle.style.left = '-10%';
             missle.style.top = '-10%';
@@ -186,7 +189,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             return missle;
         };
 
-        var createEnemy = function(top, left){
+        var createEnemy = function(){
             var enemy = document.createElement("i");
 
             enemy.className = 'fa fa-fighter-jet fa-rotate-180 text-muted';
