@@ -90,8 +90,7 @@ exports.updateCasts = function(req, res) {
 
         ops.push({
             url: 'http://wrif.com/shows/dave-and-chuck/podcasts/page/' + itter + '/?ajax=1&partial_slug=partials%2Floop-gmr_podcast&partial_name=',
-            "rejectUnauthorized": false,
-            headers: header
+            "rejectUnauthorized": false
         });
     }
 
