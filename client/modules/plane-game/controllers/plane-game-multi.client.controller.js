@@ -12,6 +12,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         $scope.enemies = [];
         $scope.fMissles = [];
         $scope.eMissles = [];
+        $scope.upgrads = [];
         $scope.average = 0;
         $scope.socket = socketService;
         $scope.playerData = {score: 0};
@@ -57,7 +58,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
             start = (new Date()).getMilliseconds();
 
-            if(averages.length > 1000) averages.shift();
+            if(averages.length > 500) averages.shift();
 
             //remove dead players, enemies, bullets
             while(data.eMissles.length < $scope.eMissles.length)
@@ -72,6 +73,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             while(data.players.length < $scope.players.length)
                 removePlayer($scope.players[0], 0);
 
+            while(data.upgrads.length < $scope.upgrads.length)
+                removeUpgrade($scope.upgrads[0], 0);
+
             //add new enemies, bullets, players
             while(data.players.length > $scope.players.length)
                 $scope.players.push(createPlayer());
@@ -85,6 +89,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             while(data.eMissles.length > $scope.eMissles.length)
                 $scope.eMissles.push(createEBody());
 
+            while(data.upgrads.length > $scope.upgrads.length)
+                $scope.upgrads.push(createUpgrade());
+
             //update movements
             var i = 0;
             for(i = 0; i < data.eMissles.length; i++)
@@ -95,6 +102,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
             for(i = 0; i < data.enemies.length; i++)
                 updateElm($scope.enemies[i], data.enemies[i]);
+
+            for(i = 0; i < data.upgrads.length; i++)
+                updateElm($scope.upgrads[i], data.upgrads[i]);
 
             for(i = 0; i < data.players.length; i++)
                 updateElm($scope.players[i], data.players[i]);
@@ -148,6 +158,14 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
                 player.parentNode.removeChild(player);
                 $scope.players.splice(index, 1);
                 console.log('Removed');
+            }
+        }
+
+        //Element removal functions
+        function removeUpgrade(upgrade, index){
+            if(upgrade.parentNode){
+                upgrade.parentNode.removeChild(upgrade);
+                $scope.upgrads.splice(index, 1);
             }
         }
 
@@ -213,6 +231,19 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             field.append( player);
 
             return player;
+        };
+
+        var createUpgrade = function(){
+            var upgrade = document.createElement("i");
+
+            upgrade.className = '';
+            upgrade.style.position = 'absolute';
+            upgrade.style.left = '-10%';
+            upgrade.style.top = '-10%';
+
+            field.append(upgrade);
+
+            return upgrade;
         };
 
         //Control handling

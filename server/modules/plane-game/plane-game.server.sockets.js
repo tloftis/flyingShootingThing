@@ -16,17 +16,42 @@ var log = require('../../../config/logger'),
 var fMissles = [],
     eMissles = [],
     enemies = [],
+    upgrads = [],
     players = {},
-    enemySpawnInterval,
+    spawnInterval,
     updatePlayerMv = {},
     shoot = {},
     leaveMultiplayer = {},
     gameRate = 25, //in Milliseconds
-    playerMvVert = 5,
+    playerMvVert = 4,
     playerMvHoz = 0.75,
     playerCnt = 0;
 
-var missleConfig= {
+var playerMissleConfig= {
+    default: {
+        name: 'Machine Gun',
+        width: 1.5,
+        length: 2,
+        speed: 2,
+        class: 'fa fa-ellipsis-h text-danger'
+    },
+    lightning: {
+        name: 'Lightning Bolt',
+        width: 2,
+        length: 2,
+        speed: 2.5,
+        class: 'fa fa-bolt text-warning fa-rotate-270'
+    },
+    lightningJumbo: {
+        name: 'Lightning Bolt',
+        width: 3,
+        length: 4,
+        speed: 1.75,
+        class: 'fa fa-bolt text-warning fa-rotate-270 fa-2x'
+    }
+};
+
+var enemyMissleConfig= {
     default: {
         name: 'Machine Gun',
         width: 1.5,
@@ -54,7 +79,7 @@ var enemyConfig = {
     default: {
         speedVert:0,
         speedHoz: 0.75,
-        ammoType: missleConfig.default,
+        ammoType: enemyMissleConfig.default,
         pointVal: 5,
         length: 2,
         width: 2,
@@ -64,7 +89,7 @@ var enemyConfig = {
         spawnOdd: 5, //out of 100
         speedVert: 0,
         speedHoz: 0.5,
-        ammoType: missleConfig.lightning,
+        ammoType: enemyMissleConfig.lightning,
         pointVal: 10,
         length: 2,
         width: 2,
@@ -74,13 +99,58 @@ var enemyConfig = {
         spawnOdd: 2, //out of 100
         speedVert: 0,
         speedHoz: 0.35,
-        ammoType: missleConfig.lightningJumbo,
+        ammoType: enemyMissleConfig.lightningJumbo,
         pointVal: 15,
         length: 3,
         width: 4,
         class: 'fa fa-space-shuttle fa-rotate-180 text-danger fa-2x'
     }
 };
+
+var playerShipConfig = {
+    default: {
+        speedVert: 4,
+        speedHoz: 0.75,
+        length: 2,
+        width: 2,
+        class: 'fa fa-fighter-jet'
+    },
+    jet: {
+        speedVert:4.5,
+        speedHoz: 0.95,
+        length: 2,
+        width: 2,
+        class: 'fa fa-fighter-jet'
+    },
+    rocket: {
+        speedVert: 4.75,
+        speedHoz: 0.65,
+        length: 2,
+        width: 2,
+        class: 'fa fa-rocket fa-rotate-45'
+    },
+    shuttle: {
+        speedVert: 4,
+        speedHoz: 1.05,
+        length: 3,
+        width: 4,
+        class: 'fa fa-space-shuttle'
+    }
+};
+
+var playerShipConfigArry = Object.keys(playerShipConfig);
+var playerMissleConfigArry = Object.keys(playerMissleConfig);
+
+//Randomizing functions for enemy movements and spawn rates, alot relies on these things
+function getRandomInt(min, max) {
+    if(min >= max) return min;
+    return Math.floor(Math.random() * (++max - min) + min);
+}
+
+function getRandomFloat(min, max) {
+    if(min >= max) return min;
+    return Math.random() * (++max - min) + min;
+}
 
 module.exports = function(io){
     //Initialization and disconnection
@@ -121,6 +191,10 @@ module.exports = function(io){
                         shoot: false,
                         score: 0,
                         players: oldPlayers,
+                        equipment: {
+                            ammoType: playerMissleConfig.default,
+                            ship: playerShipConfig.default
+                        },
                         id: id
                     };
 
@@ -169,7 +243,7 @@ module.exports = function(io){
     //This dictates the update and movement rate of all things in game
     var gameInterval = setInterval(function(){
         //If no players then reset the game
-        if(playerCnt === 0 && enemySpawnInterval)
+        if(playerCnt === 0 && spawnInterval)
             restartGame();
 
         var i = 0,
@@ -227,7 +301,15 @@ module.exports = function(io){
                 fMissles: fMissles.map(function(data){
                     return {
                         currentLeft: data.currentLeft,
-                        currentTop: data.currentTop
+                        currentTop: data.currentTop,
+                        template: data.template
+                    }
+                }),
+                upgrads: upgrads.map(function(data){
+                    return {
+                        currentLeft: data.currentLeft,
+                        currentTop: data.currentTop,
+                        template: data.template
                     }
                 }),
                 highScore: highScore
@@ -237,13 +319,15 @@ module.exports = function(io){
                 packet.players = Object.keys(player.players).map(function(key){
                     return {
                         currentTop: player.players[key].currentTop,
-                        currentLeft: player.players[key].currentLeft
+                        currentLeft: player.players[key].currentLeft,
+                        template: player.players[key].equipment.ship.class
                     };
                 });
 
                 packet.player = {
                     currentTop: player.currentTop,
                     currentLeft: player.currentLeft,
+                    template: player.equipment.ship.class,
                     score: player.score
                 }
             }else{
@@ -302,11 +386,13 @@ function removePlayer(id){
 //Multiplier game
 function startGame(){
     console.log('Attempting to Start Game');
-    if(!enemySpawnInterval){
+    if(!spawnInterval){
         console.log('Starting Game');
 
-        enemySpawnInterval = setInterval(function(){
-            if((enemies.length <= 10) && (getRandomInt(1, 6) === 5)) {
+        spawnInterval = setInterval(function(){
+            var ran = getRandomInt(1, 100);
+
+            if((enemies.length <= 10) && ((100/6) < 100)) { // 1 in 6 chance of a enemy spawn
                 var template = enemyConfig.default;
 
                 for (var key in enemyConfig) {
@@ -319,6 +405,13 @@ function startGame(){
 
                 createEnemy(template);
             }
+
+            if(ran === 1){
+                createUpgrade();
+                console.log('spawned upgrade');
+                setTimeout(function() {if(upgrads.length) upgrads.shift(); }, 5000); //upgrades only last 5 seconds
+            }
+
         }, 100);
     }
 }
@@ -334,7 +427,7 @@ function createEnemy(template){
         length: template.length || enemyConfig.default.length,
         width: template.width || enemyConfig.default.width,
         speedHoz: template.speedHoz || enemyConfig.default.speedHoz,
-        speedVert: 0,
+        speedVert: 0, //Times a random number -1 - 1
         template: template.class || enemyConfig.default.class
     });
 }
@@ -344,40 +437,56 @@ function createEMissle(enemy, template){
         eMissles.push({
             currentLeft: enemy.currentLeft,
             currentTop: enemy.currentTop,
-            length: template.length || missleConfig.default.length,
-            width: template.width || missleConfig.default.width,
-            speed: template.speed || missleConfig.default.speed,
-            template: template.class || missleConfig.default.class
+            length: template.length || enemyMissleConfig.default.length,
+            width: template.width || enemyMissleConfig.default.width,
+            speed: template.speed || enemyMissleConfig.default.speed,
+            template: template.class || enemyMissleConfig.default.class
         });
 }
 
-function createFMissle(player){
+function createFMissle(player, template){
     if(player)
         fMissles.push({
             currentLeft: player.currentLeft,
             currentTop: player.currentTop,
-            length: 2,
-            width: 1,
+            length: template.length || enemyMissleConfig.default.length,
+            width: template.width || enemyMissleConfig.default.width,
+            speed: template.speed || enemyMissleConfig.default.speed,
+            template: template.class || enemyMissleConfig.default.class,
             id: player.id
         });
 }
 
-//Randomizing functions for enemy movements and spawn rates
-function getRandomInt(min, max) {
-    if(min >= max) return min;
-    return Math.floor(Math.random() * (++max - min) + min);
-}
+function createUpgrade(template){
+    var containKey = '';
+    var contains = {};
+    var type = '';
+    if(getRandomInt(1,2) === 1){
+        containKey = playerShipConfigArry[getRandomInt(0, playerShipConfigArry.length)];
+        contains = playerShipConfig[containKey];
+        type = 'ship';
+    }else{
+        containKey = playerMissleConfigArry[getRandomInt(0, playerMissleConfigArry.length)];
+        contains = playerMissleConfig[containKey];
+        type = 'ammoType';
+    }
 
-function getRandomFloat(min, max) {
-    if(min >= max) return min;
-    return Math.random() * (++max - min) + min;
+    upgrads.push({
+        currentTop: getRandomFloat(0, 100),
+        currentLeft: getRandomFloat(0, 100),
+        contents: contains,
+        type: type,
+        length: 3,
+        width: 3,
+        template: 'fa fa-star-o fa-spin fa-pulse'
+    });
 }
 
 //Game element Update Functions
 function updateEnemy(enemy, index){
     enemy.currentLeft -= enemy.speedHoz;
 
-    var ran = getRandomInt(0, 15);
+    var ran = getRandomInt(0, 17);
 
     if(ran === 3 || enemy.currentTop === 100)
         enemy.speedVert -= getRandomFloat(0, 1);
@@ -393,7 +502,7 @@ function updateEnemy(enemy, index){
 
     if(enemy.currentTop > 100)
         enemy.currentTop = 100;
-3
+
     if((enemy.currentLeft < 0) || enemy.dead)
         enemies.splice(index, 1);
 }
@@ -418,8 +527,22 @@ function updateEMissle(missle, index){
     }
 }
 
+function updateUpgrade(upgrade, index){
+    var player = {};
+
+    for(var key in players){
+        player = players[key];
+
+        if(( (player.currentLeft + upgrade.length/2) > upgrade.currentLeft) && (player.currentLeft - upgrade.length/2) < upgrade.currentLeft)
+            if(( (player.currentTop + upgrade.width/2) > upgrade.currentTop) && (player.currentTop - upgrade.width/2) < upgrade.currentTop){
+                player.equipment[upgrade.type] = upgrade.contents;
+                upgrads.splice(index, 1);
+            }
+    }
+}
+
 function updateFMissle(missle, index){
-    missle.currentLeft += 1.5;
+    missle.currentLeft += missle.speed;
 
     if(missle.currentLeft > 100){
         fMissles.splice(index, 1);
@@ -445,34 +568,36 @@ function updateFMissle(missle, index){
 }
 
 function updatePlayer(player){
+    var ship = player.equipment.ship;
+
     if(player.mvD){
-        player.currentTop += playerMvVert;
+        player.currentTop += ship.speedVert;
         if(player.currentTop > 100)
             player.currentTop = 100;
     }
     if(player.mvU){
-        player.currentTop -= playerMvVert;
+        player.currentTop -= ship.speedVert;
         if(player.currentTop < 0)
             player.currentTop = 0;
     }
     if(player.mvL){
         if(player.currentLeft < 100)
-            player.currentLeft += playerMvHoz;
+            player.currentLeft += ship.speedHoz;
     }
     if(player.mvR){
         if(player.currentLeft > 0)
-            player.currentLeft -= playerMvHoz;
+            player.currentLeft -= ship.speedHoz;
     }
     if(player.shoot){
-        createFMissle(player);
+        createFMissle(player, player.equipment.ammoType);
         player.shoot = false;
     }
 }
 
 function restartGame(){
-    if(enemySpawnInterval){ //This should already exist but since this isn't checked at any rate just check again to make sure
-        clearInterval(enemySpawnInterval);
-        enemySpawnInterval = undefined;
+    if(spawnInterval){ //This should already exist but since this isn't checked at any rate just check again to make sure
+        clearInterval(spawnInterval);
+        spawnInterval = undefined;
     }
 
     if(enemies.length || fMissles.length || eMissles.length){
@@ -483,6 +608,7 @@ function restartGame(){
     enemies = [];
     fMissles = [];
     eMissles = [];
+    upgrads = [];
 
     blankPlayersField();
     multiClients = {};
