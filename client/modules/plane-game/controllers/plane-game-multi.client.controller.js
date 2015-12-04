@@ -192,7 +192,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         var createEnemy = function(){
             var enemy = document.createElement("i");
 
-            enemy.className = 'fa fa-fighter-jet fa-rotate-180 text-muted';
+            enemy.className = '';
             enemy.style.position = 'absolute';
             enemy.style.left = '-10%';
             enemy.style.top = '-10%';

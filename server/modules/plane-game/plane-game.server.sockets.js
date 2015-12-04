@@ -26,19 +26,61 @@ var fMissles = [],
     playerMvHoz = 0.75,
     playerCnt = 0;
 
-var missleConfig= [{
-    name: 'Lightning Bolt',
-    width: 1.5,
-    length: 2,
-    speed: 2.5,
-    class: 'fa fa-bolt text-warning fa-rotate-90'
-},{
-    name: 'Normal Multi-fire',
-    width: 1,
-    length: 2,
-    speed: 2,
-    class: 'fa fa-ellipsis-h text-danger'
-}];
+var missleConfig= {
+    default: {
+        name: 'Machine Gun',
+        width: 1.5,
+        length: 2,
+        speed: 2,
+        class: 'fa fa-ellipsis-h text-danger'
+    },
+    lightning: {
+        name: 'Lightning Bolt',
+        width: 2,
+        length: 2,
+        speed: 2.5,
+        class: 'fa fa-bolt text-warning fa-rotate-90'
+    },
+    lightningJumbo: {
+        name: 'Lightning Bolt',
+        width: 3,
+        length: 4,
+        speed: 2.25,
+        class: 'fa fa-bolt text-warning fa-rotate-90 fa-2x'
+    }
+};
+
+var enemyConfig = {
+    default: {
+        speedVert:0,
+        speedHoz: 0.75,
+        ammoType: missleConfig.default,
+        pointVal: 5,
+        length: 2,
+        width: 2,
+        class: 'fa fa-fighter-jet fa-rotate-180 text-muted'
+    },
+    rocket: {
+        spawnOdd: 5, //out of 100
+        speedVert: 0,
+        speedHoz: 0.5,
+        ammoType: missleConfig.lightning,
+        pointVal: 10,
+        length: 2,
+        width: 2,
+        class: 'fa fa-rocket fa-rotate-225 text-danger'
+    },
+    bigrocket: {
+        spawnOdd: 2, //out of 100
+        speedVert: 0,
+        speedHoz: 0.35,
+        ammoType: missleConfig.lightningJumbo,
+        pointVal: 15,
+        length: 3,
+        width: 4,
+        class: 'fa fa-space-shuttle fa-rotate-180 text-danger fa-2x'
+    }
+};
 
 module.exports = function(io){
     //Initialization and disconnection
@@ -171,14 +213,15 @@ module.exports = function(io){
                 enemies: enemies.map(function(data){
                     return {
                         currentLeft: data.currentLeft,
-                        currentTop: data.currentTop
+                        currentTop: data.currentTop,
+                        template: data.template
                     }
                 }),
                 eMissles: eMissles.map(function(data){
                     return {
                         currentLeft: data.currentLeft,
                         currentTop: data.currentTop,
-                        template: data.template || null
+                        template: data.template
                     }
                 }),
                 fMissles: fMissles.map(function(data){
@@ -263,25 +306,36 @@ function startGame(){
         console.log('Starting Game');
 
         enemySpawnInterval = setInterval(function(){
-            if((enemies.length <= 10) && (getRandomInt(1, 6) === 5))
-                createEnemy();
+            if((enemies.length <= 10) && (getRandomInt(1, 6) === 5)) {
+                var template = enemyConfig.default;
+
+                for (var key in enemyConfig) {
+                    if (key !== 'default') {
+                        if (1 === getRandomInt(1, 100 / enemyConfig[key].spawnOdd)) {
+                            template = enemyConfig[key];
+                        }
+                    }
+                }
+
+                createEnemy(template);
+            }
         }, 100);
     }
 }
 
 //Game Element creation functions
-function createEnemy(){
-    var bulletType = (getRandomInt(1, 10) === 10) ? 0 : 1;
-
+function createEnemy(template){
     enemies.push({
         currentTop: getRandomInt(0, 100),
         currentLeft: 100,
-        topDif: 0,
         dead: false,
-        ammoType: missleConfig[bulletType], //One in 10 it will be lightning
-        pointVal: (bulletType) ? 5 : 10,
-        length: 2,
-        width: 2
+        ammoType: template.ammoType || enemyConfig.default.ammoType,
+        pointVal: template.pointVal || enemyConfig.default.pointVal,
+        length: template.length || enemyConfig.default.length,
+        width: template.width || enemyConfig.default.width,
+        speedHoz: template.speedHoz || enemyConfig.default.speedHoz,
+        speedVert: 0,
+        template: template.class || enemyConfig.default.class
     });
 }
 
@@ -290,10 +344,10 @@ function createEMissle(enemy, template){
         eMissles.push({
             currentLeft: enemy.currentLeft,
             currentTop: enemy.currentTop,
-            length: template.length || 2,
-            width: template.width || 1,
-            speed: template.speed || 1.5,
-            template: template.class || 'fa fa-ellipsis-h text-danger'
+            length: template.length || missleConfig.default.length,
+            width: template.width || missleConfig.default.width,
+            speed: template.speed || missleConfig.default.speed,
+            template: template.class || missleConfig.default.class
         });
 }
 
@@ -321,25 +375,25 @@ function getRandomFloat(min, max) {
 
 //Game element Update Functions
 function updateEnemy(enemy, index){
-    enemy.currentLeft -= 0.75;
+    enemy.currentLeft -= enemy.speedHoz;
 
     var ran = getRandomInt(0, 15);
 
     if(ran === 3 || enemy.currentTop === 100)
-        enemy.topDif -= getRandomFloat(0, 1);
+        enemy.speedVert -= getRandomFloat(0, 1);
 
     if(ran === 2 || enemy.currentTop === 0)
-        enemy.topDif += getRandomFloat(0, 1);
+        enemy.speedVert += getRandomFloat(0, 1);
 
     //Shift up, down or not at all
-    enemy.currentTop += enemy.topDif;
+    enemy.currentTop += enemy.speedVert;
 
     if(enemy.currentTop < 0)
         enemy.currentTop = 0;
 
     if(enemy.currentTop > 100)
         enemy.currentTop = 100;
-
+3
     if((enemy.currentLeft < 0) || enemy.dead)
         enemies.splice(index, 1);
 }
