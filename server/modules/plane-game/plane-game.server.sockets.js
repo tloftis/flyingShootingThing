@@ -30,21 +30,21 @@ var fMissles = [],
 var playerMissleConfig= {
     default: {
         name: 'Machine Gun',
-        width: 1.5,
+        width: 1,
         length: 2,
         speed: 2,
         class: 'fa fa-ellipsis-h text-danger'
     },
     lightning: {
         name: 'Lightning Bolt',
-        width: 2,
+        width: 1.5,
         length: 2,
         speed: 2.5,
         class: 'fa fa-bolt text-warning fa-rotate-270'
     },
     lightningJumbo: {
         name: 'Lightning Bolt',
-        width: 3,
+        width: 2.5,
         length: 4,
         speed: 1.75,
         class: 'fa fa-bolt text-warning fa-rotate-270 fa-2x'
@@ -54,21 +54,21 @@ var playerMissleConfig= {
 var enemyMissleConfig= {
     default: {
         name: 'Machine Gun',
-        width: 1.5,
+        width: 1,
         length: 2,
         speed: 2,
         class: 'fa fa-ellipsis-h text-danger'
     },
     lightning: {
         name: 'Lightning Bolt',
-        width: 2,
+        width: 1.5,
         length: 2,
         speed: 2.5,
         class: 'fa fa-bolt text-warning fa-rotate-90'
     },
     lightningJumbo: {
         name: 'Lightning Bolt',
-        width: 3,
+        width: 2.5,
         length: 4,
         speed: 2.25,
         class: 'fa fa-bolt text-warning fa-rotate-90 fa-2x'
@@ -77,7 +77,7 @@ var enemyMissleConfig= {
 
 var enemyConfig = {
     default: {
-        speedVert:0,
+        speedVert: 0,
         speedHoz: 0.75,
         ammoType: enemyMissleConfig.default,
         pointVal: 5,
@@ -288,45 +288,15 @@ module.exports = function(io){
 
             //strip all data except position from enemies, and missles
             var packet = {
-                enemies: enemies.map(function(data){
-                    return {
-                        currentLeft: data.currentLeft,
-                        currentTop: data.currentTop,
-                        template: data.template
-                    }
-                }),
-                eMissles: eMissles.map(function(data){
-                    return {
-                        currentLeft: data.currentLeft,
-                        currentTop: data.currentTop,
-                        template: data.template
-                    }
-                }),
-                fMissles: fMissles.map(function(data){
-                    return {
-                        currentLeft: data.currentLeft,
-                        currentTop: data.currentTop,
-                        template: data.template
-                    }
-                }),
-                upgrads: upgrads.map(function(data){
-                    return {
-                        currentLeft: data.currentLeft,
-                        currentTop: data.currentTop,
-                        template: data.template
-                    }
-                }),
+                enemies: arrayStripper(enemies),
+                eMissles: arrayStripper(eMissles),
+                fMissles: arrayStripper(fMissles),
+                upgrads: arrayStripper(upgrads),
                 highScore: highScore
             };
 
             if(player){
-                packet.players = Object.keys(player.players).map(function(key){
-                    return {
-                        currentTop: player.players[key].currentTop,
-                        currentLeft: player.players[key].currentLeft,
-                        template: player.players[key].equipment.ship.class
-                    };
-                });
+                packet.players = objectStripper(player.players);
 
                 packet.player = {
                     currentTop: player.currentTop,
@@ -335,12 +305,7 @@ module.exports = function(io){
                     score: player.score
                 }
             }else{
-                packet.players = Object.keys(players).map(function(key){
-                    return {
-                        currentTop: players[key].currentTop,
-                        currentLeft: players[key].currentLeft
-                    };
-                });
+                packet.players = objectStripper(players);
 
                 packet.player = {
                     currentTop: -10,
@@ -421,13 +386,13 @@ function createEnemy(template){
         currentTop: getRandomInt(0, 100),
         currentLeft: 100,
         dead: false,
-        ammoType: template.ammoType || enemyConfig.default.ammoType,
-        pointVal: template.pointVal || enemyConfig.default.pointVal,
-        length: template.length || enemyConfig.default.length,
-        width: template.width || enemyConfig.default.width,
-        speedHoz: template.speedHoz || enemyConfig.default.speedHoz,
+        ammoType: template.ammoType,
+        pointVal: template.pointVal,
+        length: template.length,
+        width: template.width,
+        speedHoz: template.speedHoz,
         speedVert: 0,
-        template: template.class || enemyConfig.default.class
+        template: template.class
     });
 }
 
@@ -436,10 +401,10 @@ function createEMissle(enemy, template){
         eMissles.push({
             currentLeft: enemy.currentLeft,
             currentTop: enemy.currentTop,
-            length: template.length || enemyMissleConfig.default.length,
-            width: template.width || enemyMissleConfig.default.width,
-            speed: template.speed || enemyMissleConfig.default.speed,
-            template: template.class || enemyMissleConfig.default.class
+            length: template.length,
+            width: template.width,
+            speed: template.speed,
+            template: template.class
         });
 }
 
@@ -448,10 +413,10 @@ function createFMissle(player, template){
         fMissles.push({
             currentLeft: player.currentLeft,
             currentTop: player.currentTop,
-            length: template.length || enemyMissleConfig.default.length,
-            width: template.width || enemyMissleConfig.default.width,
-            speed: template.speed || enemyMissleConfig.default.speed,
-            template: template.class || enemyMissleConfig.default.class,
+            length: template.length,
+            width: template.width,
+            speed: template.speed,
+            template: template.class,
             id: player.id
         });
 }
@@ -513,16 +478,21 @@ function updateEMissle(missle, index){
     if(missle.currentLeft < 0){
         eMissles.splice(index, 1);
     }else{
-        var player = {};
+        var player = {}, mHW = 0, mHL = 0, pHW = 0, pHL = 0;
 
         for(var key in players){
             player = players[key];
+            mHW = missle.width/2;
+            mHL = missle.length/2;
+            pHW = player.equipment.ship.width/2;
+            pHL = player.equipment.ship.length/2;
 
-            if(( (player.currentLeft + missle.length/2) > missle.currentLeft) && (player.currentLeft - missle.length/2) < missle.currentLeft)
-                if(( (player.currentTop + missle.width/2) > missle.currentTop) && (player.currentTop - missle.width/2) < missle.currentTop){
+            if( ( (player.currentLeft + pHL + mHW) > missle.currentLeft) && (player.currentLeft - pHL - mHW) < missle.currentLeft) {
+                if (( (player.currentTop + pHW + mHW) > missle.currentTop) && (player.currentTop - pHW - mHW) < missle.currentTop) {
                     multiClients[key].emit('you-dead', {});
                     removePlayer(key);
                 }
+            }
         }
     }
 }
@@ -547,13 +517,17 @@ function updateFMissle(missle, index){
     if(missle.currentLeft > 100){
         fMissles.splice(index, 1);
     }else{
-        var enemy = {};
+        var enemy = {}, mHW = 0, mHL = 0, eHW = 0, eHL = 0;
 
         for(var j =0; j< enemies.length; j++){
             enemy = enemies[j];
+            mHW = missle.width/2;
+            mHL = missle.length/2;
+            eHW = enemy.width/2;
+            eHL = enemy.length/2;
 
-            if(( (enemy.currentLeft + missle.length/2) > missle.currentLeft) && (enemy.currentLeft - missle.length/2) < missle.currentLeft){
-                if(( (enemy.currentTop + missle.width/2) > missle.currentTop) && (enemy.currentTop - missle.width/2) < missle.currentTop){
+            if( ( (enemy.currentLeft + eHL + mHW) > missle.currentLeft) && (enemy.currentLeft - eHL - mHW) < missle.currentLeft){
+                if( ( (enemy.currentTop + eHW + mHW) > missle.currentTop) && (enemy.currentTop - eHW - mHW) < missle.currentTop){
                     var player = players[missle.id];
 
                     if(player)
@@ -629,4 +603,39 @@ function blankPlayersField(){
             }
         });
     }
+}
+
+function arrayStripper(array){
+    var newArray = [];
+    var i = 0, len = array.length, ele;
+
+    for(i = 0; i < len; i++){
+        ele = array[i];
+
+        newArray[i] = {
+            currentTop: ele.currentTop,
+            currentLeft: ele.currentLeft,
+            template: ele.template
+        }
+    }
+
+    return newArray;
+}
+
+function objectStripper(obj){
+    var newArray = [];
+    var keyArray = Object.keys(obj);
+    var i = 0, len = keyArray.length, ele;
+
+    for(i = 0; i < len; i++){
+        ele = obj[keyArray[i]];
+
+        newArray[i] = {
+            currentTop: ele.currentTop,
+            currentLeft: ele.currentLeft,
+            template: ele.equipment.ship.class
+        }
+    }
+
+    return newArray;
 }
