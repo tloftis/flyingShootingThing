@@ -113,7 +113,7 @@ var playerShipConfig = {
         speedHoz: 0.75,
         length: 2,
         width: 2,
-        class: 'fa fa-fighter-jet'
+        class: 'fa fa-plane fa-rotate-45'
     },
     jet: {
         speedVert:4.5,
@@ -263,6 +263,10 @@ module.exports = function(io){
         for(i = 0; i < fMissles.length; i++)
             updateFMissle(fMissles[i], i);
 
+        //updates the updates
+        for(i = 0; i < upgrads.length; i++)
+            updateUpgrade(upgrads[i], i);
+
         //updates all players movements
         for(key in players){
             player = players[key];
@@ -273,7 +277,7 @@ module.exports = function(io){
         }
 
         //This makes enemies shoot, random enemy at random time
-        if(getRandomInt(1, 7) === 5 && enemies.length)
+        if(getRandomInt(0, 10) === 5 && enemies.length)
             enemy = enemies[getRandomInt(0, (enemies.length -1))];
             if(enemy)
                 createEMissle(enemy, enemy.ammoType);
@@ -327,7 +331,7 @@ module.exports = function(io){
                 packet.player = {
                     currentTop: player.currentTop,
                     currentLeft: player.currentLeft,
-                    template: player.equipment.ship.class,
+                    template: player.equipment.ship.class + ' text-success',
                     score: player.score
                 }
             }else{
@@ -392,26 +396,21 @@ function startGame(){
         spawnInterval = setInterval(function(){
             var ran = getRandomInt(1, 100);
 
-            if((enemies.length <= 10) && ((100/6) < 100)) { // 1 in 6 chance of a enemy spawn
+            if((enemies.length <= 8) && (15 >= ran)) { // 1 in 10 chance of a enemy spawn
                 var template = enemyConfig.default;
 
-                for (var key in enemyConfig) {
-                    if (key !== 'default') {
-                        if (1 === getRandomInt(1, 100 / enemyConfig[key].spawnOdd)) {
+                for (var key in enemyConfig)
+                    if (key !== 'default')
+                        if (1 === getRandomInt(1, 100 / enemyConfig[key].spawnOdd))
                             template = enemyConfig[key];
-                        }
-                    }
-                }
 
                 createEnemy(template);
             }
 
             if(ran === 1){
                 createUpgrade();
-                console.log('spawned upgrade');
                 setTimeout(function() {if(upgrads.length) upgrads.shift(); }, 5000); //upgrades only last 5 seconds
             }
-
         }, 100);
     }
 }
@@ -427,7 +426,7 @@ function createEnemy(template){
         length: template.length || enemyConfig.default.length,
         width: template.width || enemyConfig.default.width,
         speedHoz: template.speedHoz || enemyConfig.default.speedHoz,
-        speedVert: 0, //Times a random number -1 - 1
+        speedVert: 0,
         template: template.class || enemyConfig.default.class
     });
 }
@@ -461,12 +460,13 @@ function createUpgrade(template){
     var containKey = '';
     var contains = {};
     var type = '';
+
     if(getRandomInt(1,2) === 1){
-        containKey = playerShipConfigArry[getRandomInt(0, playerShipConfigArry.length)];
+        containKey = playerShipConfigArry[getRandomInt(0, (playerShipConfigArry.length - 1))];
         contains = playerShipConfig[containKey];
         type = 'ship';
     }else{
-        containKey = playerMissleConfigArry[getRandomInt(0, playerMissleConfigArry.length)];
+        containKey = playerMissleConfigArry[getRandomInt(0, (playerMissleConfigArry.length - 1))];
         contains = playerMissleConfig[containKey];
         type = 'ammoType';
     }
@@ -476,8 +476,8 @@ function createUpgrade(template){
         currentLeft: getRandomFloat(0, 100),
         contents: contains,
         type: type,
-        length: 3,
-        width: 3,
+        length: 4,
+        width: 4,
         template: 'fa fa-star-o fa-spin fa-pulse'
     });
 }
