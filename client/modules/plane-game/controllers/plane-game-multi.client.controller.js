@@ -127,6 +127,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
         function playerDeath(data){
             console.log('You dead');
+            stopJoystick();
             Alerts.addAlert('danger', 'You Dead');
         }
 
@@ -305,15 +306,6 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
         //Mobile joystick support
         if($scope.mobilecheck()){
-            var joystick = new VirtualJoystick({
-                mouseSupport	: true,
-                limitStickTravel: true,
-                stickRadius	: 50
-            });
-
-            $scope.playerMv.hoz = joystick.deltaX()/50;
-            $scope.playerMv.vert = joystick.deltaY()/50;
-            $scope.socket.emit('control-movement', $scope.playerMv);
 
             field.on('mousedown', function mouseState(e) {
                 if(!interval)
@@ -329,8 +321,31 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
                 $scope.socket.emit('control-movement', $scope.playerMv);
             });
         }
+        var joystick;
+
+        function stopJoystick() {
+            joystick.destroy();
+            joystick = null;
+        }
+
+        $scope.startJoystick = function(){
+            joystick = new VirtualJoystick({
+                mouseSupport	: true,
+                limitStickTravel: true,
+                stickRadius	: 50
+            });
+
+            $scope.playerMv.hoz = joystick.deltaX()/50;
+            $scope.playerMv.vert = joystick.deltaY()/50;
+            $scope.socket.emit('control-movement', $scope.playerMv);
+        };
 
         var interval;
+
+        $scope.join = function(){
+            if($scope.mobilecheck()) startJoystick();
+            $scope.socket.emit('join-multiplier', {});
+        };
 
         function onHold(){
             $scope.playerMv.hoz = joystick.deltaX()/50;
