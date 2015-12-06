@@ -40,7 +40,9 @@ module.exports = {
                 'client/lib/ng-file-upload/ng-file-upload.min.js',
                 'client/lib/ng-file-upload-shim/ng-file-upload-shim.min.js',
                 'client/lib/angular-growl-v2/build/angular-growl.min.js',
-                'client/lib/angular-ui-sortable/sortable.js'
+                'client/lib/angular-ui-sortable/sortable.js',
+				'client/cust-lib/angular-ui-sortable/sortable.js',
+				'client/cust-lib/virtual-joystick/virtual-joystick.js'
 			]
 		},
 		css: [

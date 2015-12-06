@@ -48,6 +48,13 @@ var playerMissleConfig= {
         length: 4,
         speed: 1.75,
         class: 'fa fa-bolt text-warning fa-rotate-270 fa-2x'
+    },
+    sawBlade: {
+        name: 'Saw Blade',
+        width: 2,
+        length: 4,
+        speed: 1.35,
+        class: 'fa fa-gear text-warning fa-spln'
     }
 };
 
@@ -184,10 +191,8 @@ module.exports = function(io){
                     var player = {
                         currentTop: 50,
                         currentLeft: 10,
-                        mvL: false,
-                        mvR: false,
-                        mvU: false,
-                        mvD: false,
+                        speedHoz: 0,
+                        speedVert: 0,
                         shoot: false,
                         score: 0,
                         players: oldPlayers,
@@ -208,10 +213,8 @@ module.exports = function(io){
 
                     //Multiplier game
                     updatePlayerMv[id] = function(data) {
-                        player.mvL = data.mvL || false;
-                        player.mvR = data.mvR || false;
-                        player.mvU = data.mvU || false;
-                        player.mvD = data.mvD || false;
+                        player.speedHoz = data.hoz || 0;
+                        player.speedVert = data.vert || 0;
                     };
 
                     //Set the player to shoot next update
@@ -544,28 +547,26 @@ function updateFMissle(missle, index){
 function updatePlayer(player){
     var ship = player.equipment.ship;
 
-    if(player.mvD){
-        player.currentTop += ship.speedVert;
-        if(player.currentTop > 100)
-            player.currentTop = 100;
-    }
-    if(player.mvU){
-        player.currentTop -= ship.speedVert;
-        if(player.currentTop < 0)
-            player.currentTop = 0;
-    }
-    if(player.mvL){
-        if(player.currentLeft < 100)
-            player.currentLeft += ship.speedHoz;
-    }
-    if(player.mvR){
-        if(player.currentLeft > 0)
-            player.currentLeft -= ship.speedHoz;
-    }
+    player.currentLeft += ship.speedHoz * player.speedHoz;
+    player.currentTop += ship.speedVert * player.speedVert;
+
+    if(player.currentTop > 100)
+        player.currentTop = 100;
+
+    if(player.currentTop < 0)
+        player.currentTop = 0;
+
+    if(player.currentLeft > 100)
+        player.currentLeft = 100;
+
+    if(player.currentLeft < 0)
+        player.currentLeft = 0;
+
     if(player.shoot){
         createFMissle(player, player.equipment.ammoType);
         player.shoot = false;
     }
+
 }
 
 function restartGame(){
