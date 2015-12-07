@@ -4,8 +4,8 @@ NODE_ENV=production
 
 ################### OPTIONAL PARAMETERS ###################
 #MONGO_URL=mongodb://127.0.0.1:27017/plane-game
-#APP_SSL_PFX=./certificate/cert.pfx
-
+#APP_SSL_KEY=./certificate/key.pem
+#APP_SSL_CERT=./certificate/cert.pem
 #PORT=2000
 
 # Redirect port 80 to the port defined

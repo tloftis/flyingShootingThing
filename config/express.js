@@ -18,7 +18,7 @@ var express = require('express'),
     mongoStore = require('connect-mongo')({
         session: session
     }),
-	fs = require('fs'),
+    fs = require('fs'),
     flash = require('connect-flash'),
     config = require('./config'),
     consolidate = require('consolidate'),
@@ -58,13 +58,14 @@ module.exports = function(db) {
 
     //Only using http right now as it doesn't actually matter for such a simple thing
 
-	if(process.env.APP_SSL_PFX) {
+	if(process.env.APP_SSL_KEY && process.env.APP_SSL_CERT) {
 		server = https.createServer({
-			pfx: fs.readFileSync(path.join(__dirname, process.env.APP_SSL_PFX))
+			key: fs.readFileSync(path.join(__dirname, process.env.APP_SSL_KEY)),
+			cert: fs.readFileSync(path.join(__dirname, process.env.APP_SSL_CERT))
 		}, app);
-	}else
+	}else{
     	server = http.createServer(app);
-
+}
 
     io = require('socket.io').listen(server);
 
