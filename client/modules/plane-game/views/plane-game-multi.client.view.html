@@ -1,9 +1,5 @@
 <section class="prepend-top-10" ng-init="init()">
-    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
-    <div>x:{{ x }}, y:{{ y }}</div>
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
-        <button class="btn btn-info" ng-click="join()" style="margin-right: 2%;">Join</button>
-        <button class="btn btn-warning"  ng-click="socket.emit('start-game', {});">Start</button>
 
         <div class="col-sm-12 col-xs-12 bg-center" style="margin-top: 10px;">
             <div class="pull-left">
@@ -26,7 +22,13 @@
         </div>
     </div>
 
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+        <button class="btn btn-info" ng-click="join()" style="margin-right: 2%;">Join</button>
+        <button class="btn btn-warning"  ng-click="socket.emit('start-game', {});">Start</button>
+    </div>
+
     <!--
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center" ng-show="mobilecheck()">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
             <button class="btn btn-primary"
