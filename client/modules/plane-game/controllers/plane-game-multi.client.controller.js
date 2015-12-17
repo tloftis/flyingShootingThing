@@ -16,6 +16,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         $scope.playerData = {score: 0};
         $scope.highScore = 0;
 
+        var speech = window.speechSynthesis;
+        var pew = new SpeechSynthesisUtterance('PEW!');
+
         $scope.init = function(){
             $scope.player = createPlayer();
             $scope.player.className += ' text-success';
@@ -64,8 +67,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             while(data.eMissles.length < $scope.eMissles.length)
                 removeEMissles($scope.eMissles[0], 0);
 
-            while(data.fMissles.length < $scope.fMissles.length)
+            while(data.fMissles.length < $scope.fMissles.length){
                 removeFMissle($scope.fMissles[0], 0);
+            }
 
             while(data.enemies.length < $scope.enemies.length)
                 removeEnemy($scope.enemies[0], 0);
@@ -83,8 +87,10 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             while(data.enemies.length > $scope.enemies.length)
                 $scope.enemies.push(createEnemy());
 
-            while(data.fMissles.length > $scope.fMissles.length)
+            while(data.fMissles.length > $scope.fMissles.length){
                 $scope.fMissles.push(createBody());
+                speech.speak(pew)
+            }
 
             while(data.eMissles.length > $scope.eMissles.length)
                 $scope.eMissles.push(createEBody());
@@ -97,8 +103,9 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
             for(i = 0; i < data.eMissles.length; i++)
                 updateElm($scope.eMissles[i], data.eMissles[i]);
 
-            for(i = 0; i < data.fMissles.length; i++)
+            for(i = 0; i < data.fMissles.length; i++) {
                 updateElm($scope.fMissles[i], data.fMissles[i]);
+            }
 
             for(i = 0; i < data.enemies.length; i++)
                 updateElm($scope.enemies[i], data.enemies[i]);
