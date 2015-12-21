@@ -313,7 +313,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
         $scope.join = function(){
             //if($scope.mobilecheck()) startJoystick();
-            window.scroll(0,findPos(fieldEle[0]));
+            //window.scroll(0,findPos(fieldEle[0]));
             $scope.socket.emit('join-multiplier', {});
         };
 

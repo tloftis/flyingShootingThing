@@ -163,21 +163,21 @@ module.exports = function(io){
     //Initialization and disconnection
     io.on('connection', function (client) {
         function individualClients(client){
-            clients[client.handshake.address] = client;
+            var id = client.handshake.address;
+
+            clients[id] = client;
 
             client.on('disconnect', function () {
-                delete clients[client.handshake.address]; //no disconnect means no re-connect, new sockets only
+                delete clients[id]; //no disconnect means no re-connect, new sockets only
 
-                if(multiClients[client.handshake.address]){
-                    removePlayer(client.handshake.address);
-                    delete multiClients[client.handshake.address];
+                if(multiClients[id]){
+                    removePlayer(id);
+                    delete multiClients[id];
                 }
             });
 
             //Multiplier game
             client.on('join-multiplier', function (data) {
-                var id = client.handshake.address;
-
                 if(!multiClients[id]){
                     multiClients[id] = client;
 
@@ -237,8 +237,9 @@ module.exports = function(io){
             });
         }
 
-        if(clients[client.handshake.address] === undefined)
+        if(clients[client.handshake.address] === undefined) {
             individualClients(client); //I like the way this looked, so I went for it
+        }
     });
 
     var highScore = 0;
@@ -327,19 +328,19 @@ function removePlayer(id){
     try{
         client.removeListener('control-movement', updatePlayerMv[id]);
     }catch(err){
-        console.log(err);
+        console.error('Failed trying remove controls listener', err);
     }
 
     try{
         client.removeListener('control-shoot', shoot[id]);
     }catch(err){
-        console.log(err);
+        console.error('Failed trying remove shooting listener', err);
     }
 
     try{
         client.removeListener('good-bye', leaveMultiplayer[id]);
     }catch(err){
-        console.log(err);
+        console.error('Failed trying remove game exiting listener', err);
     }
 
     client.removeListener('start-game', startGame);
@@ -357,7 +358,6 @@ function removePlayer(id){
 
 //Multiplier game
 function startGame(){
-    console.log('Attempting to Start Game');
     if(!spawnInterval){
         console.log('Starting Game');
 
