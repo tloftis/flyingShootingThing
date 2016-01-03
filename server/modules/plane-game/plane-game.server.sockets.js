@@ -32,28 +32,32 @@ var playerMissleConfig= {
         name: 'Machine Gun',
         width: 1,
         length: 2,
-        speed: 2,
+        speedHoz: 2,
+        speedVert: 0,
         class: 'fa fa-ellipsis-h text-danger'
     },
     lightning: {
         name: 'Lightning Bolt',
         width: 1.5,
         length: 2,
-        speed: 2.5,
+        speedHoz: 2.5,
+        speedVert: 0,
         class: 'fa fa-bolt text-warning fa-rotate-270'
     },
     lightningJumbo: {
-        name: 'Lightning Bolt',
+        name: 'Super Lightning Bolt',
         width: 2.5,
         length: 4,
-        speed: 1.75,
+        speedHoz: 1.75,
+        speedVert: 0,
         class: 'fa fa-bolt text-warning fa-rotate-270 fa-2x'
     },
     sawBlade: {
         name: 'Saw Blade',
         width: 2,
         length: 4,
-        speed: 1.35,
+        speedHoz: 1.35,
+        speedVert: 0,
         class: 'fa fa-gear text-warning fa-spln'
     }
 };
@@ -63,22 +67,49 @@ var enemyMissleConfig= {
         name: 'Machine Gun',
         width: 1,
         length: 2,
-        speed: 2,
+        speedHoz: 2,
+        speedVert: 0,
         class: 'fa fa-ellipsis-h text-danger'
     },
     lightning: {
         name: 'Lightning Bolt',
         width: 1.5,
         length: 2,
-        speed: 2.5,
+        speedHoz: 2.5,
+        speedVert: 0,
         class: 'fa fa-bolt text-warning fa-rotate-90'
     },
     lightningJumbo: {
         name: 'Lightning Bolt',
         width: 2.5,
         length: 4,
-        speed: 2.25,
+        speedHoz: 2.25,
+        speedVert: 0,
         class: 'fa fa-bolt text-warning fa-rotate-90 fa-2x'
+    },
+    blitzShot: {
+        name: 'Blitz Shot',
+        rounds: [
+            {
+                width: 2.5,
+                length: 4,
+                speedHoz: 1,
+                speedVert: 1,
+                class: 'fa fa-ellipsis-h text-warning fa-rotate-45'
+            },{
+                width: 2.5,
+                length: 4,
+                speedHoz: 1,
+                speedVert: 0,
+                class: 'fa fa-ellipsis-h text-warning'
+            },{
+                width: 2.5,
+                length: 4,
+                speedHoz: 1,
+                speedVert: -1,
+                class: 'fa fa-ellipsis-h text-warning fa-rotate-315'
+            }
+        ]
     }
 };
 
@@ -101,6 +132,16 @@ var enemyConfig = {
         length: 2,
         width: 2,
         class: 'fa fa-rocket fa-rotate-225 text-danger'
+    },
+    blitzer: {
+        spawnOdd: 2, //out of 100
+        speedVert: 0,
+        speedHoz: 0.5,
+        ammoType: enemyMissleConfig.blitzShot,
+        pointVal: 10,
+        length: 2,
+        width: 2,
+        class: 'fa fa-plane fa-rotate-225'
     },
     bigrocket: {
         spawnOdd: 2, //out of 100
@@ -400,28 +441,44 @@ function createEnemy(template){
 }
 
 function createEMissle(enemy, template){
-    if(enemy)
-        eMissles.push({
-            currentLeft: enemy.currentLeft,
-            currentTop: enemy.currentTop,
-            length: template.length,
-            width: template.width,
-            speed: template.speed,
-            template: template.class
-        });
+    if (enemy) {
+        if (template.rounds) {
+            for (var i = 0, roundLen = template.rounds.length; i < roundLen; i++) {
+                createEMissle(enemy, template.rounds[i]);
+            }
+        } else {
+            eMissles.push({
+                currentLeft: enemy.currentLeft,
+                currentTop: enemy.currentTop,
+                length: template.length,
+                width: template.width,
+                speed: template.speedHoz,
+                speedV: template.speedVert,
+                template: template.class
+            });
+        }
+    }
 }
 
 function createFMissle(player, template){
-    if(player)
-        fMissles.push({
-            currentLeft: player.currentLeft,
-            currentTop: player.currentTop,
-            length: template.length,
-            width: template.width,
-            speed: template.speed,
-            template: template.class,
-            id: player.id
-        });
+    if (player) {
+        if (template.rounds) {
+            for (var i = 0, roundLen = template.rounds.length; i < roundLen; i++) {
+                createFMissle(player, template.rounds[i]);
+            }
+        } else {
+            fMissles.push({
+                currentLeft: player.currentLeft,
+                currentTop: player.currentTop,
+                length: template.length,
+                width: template.width,
+                speed: template.speedHoz,
+                speedV: template.speedVert,
+                template: template.class,
+                id: player.id
+            });
+        }
+    }
 }
 
 function createUpgrade(template){
@@ -429,6 +486,7 @@ function createUpgrade(template){
     var contains = {};
     var type = '';
 
+    //Basically flipping a coin
     if(getRandomInt(1,2) === 1){
         containKey = playerShipConfigArry[getRandomInt(0, (playerShipConfigArry.length - 1))];
         contains = playerShipConfig[containKey];
@@ -446,7 +504,7 @@ function createUpgrade(template){
         type: type,
         length: 4,
         width: 4,
-        template: 'fa fa-star-o fa-spin fa-pulse'
+        template: 'fa fa-star-o fa-spin text-warning '
     });
 }
 
@@ -477,20 +535,21 @@ function updateEnemy(enemy, index){
 
 function updateEMissle(missle, index){
     missle.currentLeft -= missle.speed;
+    missle.currentTop -= missle.speedV;
 
-    if(missle.currentLeft < 0){
+    if (missle.currentLeft < 0 || missle.currentTop > 100 || missle.currentTop < 0) {
         eMissles.splice(index, 1);
-    }else{
+    } else {
         var player = {}, mHW = 0, mHL = 0, pHW = 0, pHL = 0;
 
-        for(var key in players){
+        for (var key in players) {
             player = players[key];
-            mHW = missle.width/2;
-            mHL = missle.length/2;
-            pHW = player.equipment.ship.width/2;
-            pHL = player.equipment.ship.length/2;
+            mHW = missle.width / 2;
+            mHL = missle.length / 2;
+            pHW = player.equipment.ship.width / 2;
+            pHL = player.equipment.ship.length / 2;
 
-            if( ( (player.currentLeft + pHL + mHW) > missle.currentLeft) && (player.currentLeft - pHL - mHW) < missle.currentLeft) {
+            if (( (player.currentLeft + pHL + mHW) > missle.currentLeft) && (player.currentLeft - pHL - mHW) < missle.currentLeft) {
                 if (( (player.currentTop + pHW + mHW) > missle.currentTop) && (player.currentTop - pHW - mHW) < missle.currentTop) {
                     multiClients[key].emit('you-dead', {});
                     removePlayer(key);
@@ -516,8 +575,9 @@ function updateUpgrade(upgrade, index){
 
 function updateFMissle(missle, index){
     missle.currentLeft += missle.speed;
+    missle.currentTop -= missle.speedV;
 
-    if(missle.currentLeft > 100){
+    if(missle.currentLeft > 100 || missle.currentTop > 100 || missle.currentTop < 0){
         fMissles.splice(index, 1);
     }else{
         var enemy = {}, mHW = 0, mHL = 0, eHW = 0, eHL = 0;

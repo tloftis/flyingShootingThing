@@ -13,11 +13,12 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         $scope.upgrads = [];
         $scope.average = 0;
         $scope.socket = socketService;
-        $scope.playerData = {score: 0};
+        $scope.playerData = { score: 0 };
         $scope.highScore = 0;
 
         var speech = window.speechSynthesis;
         var pew = new SpeechSynthesisUtterance('PEW!');
+        var death = new SpeechSynthesisUtterance('BOOM! Your dead');
 
         $scope.init = function(){
             $scope.player = createPlayer();
@@ -89,7 +90,7 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
 
             while(data.fMissles.length > $scope.fMissles.length){
                 $scope.fMissles.push(createBody());
-                speech.speak(pew)
+                //speech.speak(death);
             }
 
             while(data.eMissles.length > $scope.eMissles.length)
@@ -133,12 +134,12 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         };
 
         function playerDeath(data){
-            console.log('You dead');
+            speech.speak(death);
 
             $scope.playerMv.hoz = 0;
             $scope.playerMv.vert = 0;
 
-            stopJoystick();
+            //stopJoystick();
             Alerts.addAlert('danger', 'You Dead');
         }
 
@@ -165,11 +166,11 @@ angular.module('plane-game').controller('planeGameMultiController', ['socketServ
         }
 
         function removePlayer(player, index){
-            console.log('Removing Player');
+            Alerts.addAlert('warning', 'Teammate down!');
+
             if(player.parentNode){
                 player.parentNode.removeChild(player);
                 $scope.players.splice(index, 1);
-                console.log('Removed');
             }
         }
 
